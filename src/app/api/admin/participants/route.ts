@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUserFromRequest, toPublicUser } from '@/lib/auth';
-import { getAllUsers } from '@/lib/db';
+import { getAllUsers, isPostgresConnected } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const caller = getAuthUserFromRequest(request);
+    const caller = await getAuthUserFromRequest(request);
     if (!caller || caller.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden. Super Admin access required.' },
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const allUsers = getAllUsers();
+    const allUsers = await getAllUsers();
     const participants = allUsers
       .filter((u) => u.role !== 'admin')
       .map(toPublicUser);
@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       approved: participants.filter((p) => p.certificateStatus === 'APPROVED').length,
       rejected: participants.filter((p) => p.certificateStatus === 'REJECTED').length,
       notRequested: participants.filter((p) => p.certificateStatus === 'NOT_REQUESTED').length,
+      isPostgres: isPostgresConnected(),
     };
 
     return NextResponse.json({ participants, stats });

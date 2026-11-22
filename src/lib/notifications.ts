@@ -165,6 +165,48 @@ export async function syncToGoogleSheets(user: User): Promise<boolean> {
 }
 
 /**
+ * Syncs certificate approval directly to Google Sheets via Webhook
+ */
+export async function syncApprovalToGoogleSheets(user: User): Promise<boolean> {
+  try {
+    const webhookUrl = config.googleSheetsWebhookUrl;
+    if (!webhookUrl) return false;
+
+    const payload = {
+      action: 'CERTIFICATE_APPROVED',
+      timestamp: new Date().toISOString(),
+      name: user.name,
+      teamName: user.teamName,
+      email: user.email,
+      contact: user.contact,
+      college: user.college,
+      location: user.location,
+      state: user.state,
+      country: user.country,
+      pincode: user.pincode,
+      topicTitle: user.topicTitle,
+      topicDomain: user.topicDomain,
+      presentedOn: user.presentedOn,
+      status: 'APPROVED',
+      certificateId: user.certificateId,
+      approvedAt: user.certificateApprovedAt,
+      approvedBy: user.certificateApprovedBy,
+    };
+
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    return res.ok;
+  } catch (err) {
+    console.error('[Google Sheets Approval Sync Error]', err);
+    return false;
+  }
+}
+
+/**
  * Sends Registration Confirmation Email directly to the Participant
  */
 export async function sendParticipantWelcomeEmail(user: User): Promise<boolean> {

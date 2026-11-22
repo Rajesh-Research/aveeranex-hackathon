@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUserFromRequest, toPublicUser } from '@/lib/auth';
 import { rejectCertificate, getUserById } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
-    const caller = getAuthUserFromRequest(request);
+    const caller = await getAuthUserFromRequest(request);
     if (!caller || caller.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden. Super Admin access required.' },
@@ -19,12 +21,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required.' }, { status: 400 });
     }
 
-    const targetUser = getUserById(userId);
+    const targetUser = await getUserById(userId);
     if (!targetUser) {
       return NextResponse.json({ error: 'Participant not found.' }, { status: 404 });
     }
 
-    const updatedUser = rejectCertificate(userId, reason);
+    const updatedUser = await rejectCertificate(userId, reason);
     if (!updatedUser) {
       return NextResponse.json({ error: 'Failed to update certificate status.' }, { status: 500 });
     }

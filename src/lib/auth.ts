@@ -27,7 +27,7 @@ export function verifyToken(token: string): { userId: string; email: string; rol
   }
 }
 
-export function getAuthUserFromRequest(request: NextRequest): User | null {
+export async function getAuthUserFromRequest(request: NextRequest): Promise<User | null> {
   // Check cookie
   const tokenFromCookie = request.cookies.get('avx_token')?.value;
   // Check authorization header
@@ -40,7 +40,7 @@ export function getAuthUserFromRequest(request: NextRequest): User | null {
   const decoded = verifyToken(token);
   if (!decoded || !decoded.userId) return null;
 
-  const user = getUserById(decoded.userId);
+  const user = await getUserById(decoded.userId);
   return user || null;
 }
 

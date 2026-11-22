@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const user = getAuthUserFromRequest(request);
+    const user = await getAuthUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized. Please log in.' }, { status: 401 });
     }
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const updatedUser = requestCertificate(user.id);
+    const updatedUser = await requestCertificate(user.id);
     if (!updatedUser) {
       return NextResponse.json({ error: 'User not found.' }, { status: 404 });
     }

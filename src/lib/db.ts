@@ -7,20 +7,25 @@ import { User, CertificateStatus } from './types';
 const DB_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DB_DIR, 'db.json');
 
-// In-memory cache
+// In-memory cache for fast reads and fallback
 let memoryUsers: User[] = [];
-let initialized = false;
+let memoryInitialized = false;
 
-// Postgres connection if configured
-const postgresUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+// Postgres connection pool
 let pool: Pool | null = null;
+let initPromise: Promise<void> | null = null;
 
-if (postgresUrl) {
-  try {
-    pool = new Pool({ connectionString: postgresUrl });
-  } catch (err) {
-    console.error('Error creating Postgres pool:', err);
+function getPool(): Pool | null {
+  const url = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+  if (!url) return null;
+  if (!pool) {
+    try {
+      pool = new Pool({ connectionString: url });
+    } catch (err) {
+      console.error('Error creating Postgres pool:', err);
+    }
   }
+  return pool;
 }
 
 function ensureDataDirectory() {
@@ -55,46 +60,42 @@ function saveUsersToDisk(users: User[]) {
   }
 }
 
-// Auto-create table in Postgres if connected
-async function initPostgresTable() {
-  if (!pool) return;
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id VARCHAR(255) PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        team_name VARCHAR(255) NOT NULL,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        contact VARCHAR(100) NOT NULL,
-        college VARCHAR(255) NOT NULL,
-        location VARCHAR(255) NOT NULL,
-        state VARCHAR(255) NOT NULL,
-        country VARCHAR(100) NOT NULL,
-        pincode VARCHAR(50) NOT NULL,
-        topic_title TEXT NOT NULL,
-        topic_domain VARCHAR(255) NOT NULL,
-        presented_on VARCHAR(255) NOT NULL,
-        password_hash TEXT NOT NULL,
-        role VARCHAR(50) NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        certificate_status VARCHAR(50) NOT NULL,
-        certificate_id VARCHAR(100),
-        certificate_approved_at TIMESTAMPTZ,
-        certificate_approved_by VARCHAR(255),
-        rejection_reason TEXT
-      );
-    `);
-  } catch (err) {
-    console.error('Error initializing Postgres table:', err);
-  }
+function rowToUser(row: any): User {
+  return {
+    id: row.id,
+    name: row.name,
+    teamName: row.team_name,
+    email: row.email,
+    contact: row.contact,
+    college: row.college,
+    location: row.location,
+    state: row.state,
+    country: row.country,
+    pincode: row.pincode,
+    topicTitle: row.topic_title,
+    topicDomain: row.topic_domain,
+    presentedOn: row.presented_on,
+    passwordHash: row.password_hash,
+    role: row.role as 'user' | 'admin',
+    createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
+    certificateStatus: row.certificate_status as CertificateStatus,
+    certificateId: row.certificate_id || undefined,
+    certificateApprovedAt: row.certificate_approved_at
+      ? new Date(row.certificate_approved_at).toISOString()
+      : undefined,
+    certificateApprovedBy: row.certificate_approved_by || undefined,
+    rejectionReason: row.rejection_reason || undefined,
+    resetPasswordToken: row.reset_password_token || undefined,
+    resetPasswordExpires: row.reset_password_expires
+      ? new Date(row.reset_password_expires).toISOString()
+      : undefined,
+  };
 }
 
-export function initializeDatabase() {
-  if (initialized) return;
+function initMemoryDatabase() {
+  if (memoryInitialized) return;
 
   let users = loadUsersFromDisk();
-
-  // Check if super admin exists
   const adminEmail = 'info@aveeranex.com';
   const existingAdmin = users.find((u) => u.email.toLowerCase() === adminEmail);
 
@@ -122,92 +123,209 @@ export function initializeDatabase() {
       certificateApprovedAt: '2026-11-22T10:00:00.000Z',
       certificateApprovedBy: 'SUPER_ADMIN',
     };
-    users.push(superAdmin);
-  }
-
-  // Pre-seed sample participants if database is new
-  const sampleUserEmail = 'innovator@aveeranex.com';
-  if (!users.find((u) => u.email.toLowerCase() === sampleUserEmail)) {
-    const userPasswordHash = bcrypt.hashSync('Hackathon@2026', 10);
-    const sampleUser: User = {
-      id: 'usr_part_001',
-      name: 'Aditya Sharma',
-      teamName: 'Neural Nexians',
-      email: sampleUserEmail,
-      contact: '+91 9845012345',
-      college: 'Indian Institute of Technology (IIT)',
-      location: 'Bengaluru',
-      state: 'Karnataka',
-      country: 'India',
-      pincode: '560012',
-      topicTitle: 'Autonomous Edge AI for Medical Diagnostics',
-      topicDomain: 'AI / Machine Learning',
-      presentedOn: "AVEERANEX INNOVATE ONLINE HACKATHON  Nov'26",
-      passwordHash: userPasswordHash,
-      role: 'user',
-      createdAt: '2026-11-21T09:30:00.000Z',
-      certificateStatus: 'APPROVED',
-      certificateId: 'AVX-2026-NOV-9841',
-      certificateApprovedAt: '2026-11-22T11:15:00.000Z',
-      certificateApprovedBy: 'Dr. Rajesh Kumar',
-    };
-
-    const pendingUser: User = {
-      id: 'usr_part_002',
-      name: 'Priya Sundaram',
-      teamName: 'Quantum Coders',
-      email: 'priya.s@university.edu',
-      contact: '+91 9765432109',
-      college: 'National Institute of Technology (NIT)',
-      location: 'Chennai',
-      state: 'Tamil Nadu',
-      country: 'India',
-      pincode: '600025',
-      topicTitle: 'Decentralized Zero-Knowledge Verification Platform',
-      topicDomain: 'Web3 / Blockchain',
-      presentedOn: "AVEERANEX INNOVATE ONLINE HACKATHON  Nov'26",
-      passwordHash: userPasswordHash,
-      role: 'user',
-      createdAt: '2026-11-22T08:20:00.000Z',
-      certificateStatus: 'PENDING_APPROVAL',
-    };
-
-    users.push(sampleUser, pendingUser);
+    users.unshift(superAdmin);
   }
 
   memoryUsers = users;
   saveUsersToDisk(users);
-
-  if (pool) {
-    initPostgresTable().catch((e) => console.error(e));
-  }
-
-  initialized = true;
+  memoryInitialized = true;
 }
 
-export function getAllUsers(): User[] {
-  initializeDatabase();
+export async function initDatabase(): Promise<void> {
+  initMemoryDatabase();
+
+  const p = getPool();
+  if (!p) return;
+
+  if (!initPromise) {
+    initPromise = (async () => {
+      try {
+        await p.query(`
+          CREATE TABLE IF NOT EXISTS users (
+            id VARCHAR(255) PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            team_name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            contact VARCHAR(100) NOT NULL,
+            college VARCHAR(255) NOT NULL,
+            location VARCHAR(255) NOT NULL,
+            state VARCHAR(255) NOT NULL,
+            country VARCHAR(100) NOT NULL,
+            pincode VARCHAR(50) NOT NULL,
+            topic_title TEXT NOT NULL,
+            topic_domain VARCHAR(255) NOT NULL,
+            presented_on VARCHAR(255) NOT NULL,
+            password_hash TEXT NOT NULL,
+            role VARCHAR(50) NOT NULL,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            certificate_status VARCHAR(50) NOT NULL,
+            certificate_id VARCHAR(100),
+            certificate_approved_at TIMESTAMPTZ,
+            certificate_approved_by VARCHAR(255),
+            rejection_reason TEXT,
+            reset_password_token TEXT,
+            reset_password_expires TIMESTAMPTZ
+          );
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_token TEXT;
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMPTZ;
+        `);
+
+        // Check if admin exists in Postgres
+        const adminRes = await p.query(
+          'SELECT id FROM users WHERE LOWER(email) = $1 LIMIT 1',
+          ['info@aveeranex.com']
+        );
+
+        if (adminRes.rows.length === 0) {
+          const adminPasswordHash = bcrypt.hashSync('aveeranex@123', 10);
+          await p.query(
+            `INSERT INTO users (
+               id, name, team_name, email, contact, college, location, state, country, pincode,
+               topic_title, topic_domain, presented_on, password_hash, role, certificate_status,
+               certificate_id, certificate_approved_at, certificate_approved_by, created_at
+             ) VALUES (
+               'usr_admin_001', 'Dr. Rajesh Kumar (Director)', 'AVEERANEX Leadership', 'info@aveeranex.com',
+               '+91 9876543210', 'AVEERANEX Headquarters', 'Bengaluru', 'Karnataka', 'India', '560001',
+               'AVEERANEX Innovate Hackathon 2026 Super Admin', 'Leadership & Research',
+               'AVEERANEX INNOVATE ONLINE HACKATHON  Nov''26', $1, 'admin', 'APPROVED',
+               'AVX-2026-NOV-ADMIN', NOW(), 'SUPER_ADMIN', NOW()
+             ) ON CONFLICT (email) DO NOTHING`,
+            [adminPasswordHash]
+          );
+        }
+
+        // Migrate seed users from disk if not present in Postgres
+        const diskUsers = loadUsersFromDisk();
+        for (const u of diskUsers) {
+          if (u.role !== 'admin') {
+            await p.query(
+              `INSERT INTO users (
+                 id, name, team_name, email, contact, college, location, state, country, pincode,
+                 topic_title, topic_domain, presented_on, password_hash, role, certificate_status,
+                 certificate_id, certificate_approved_at, certificate_approved_by, created_at
+               ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+               ON CONFLICT (email) DO UPDATE SET
+                 certificate_status = EXCLUDED.certificate_status,
+                 certificate_id = COALESCE(users.certificate_id, EXCLUDED.certificate_id),
+                 certificate_approved_at = COALESCE(users.certificate_approved_at, EXCLUDED.certificate_approved_at),
+                 certificate_approved_by = COALESCE(users.certificate_approved_by, EXCLUDED.certificate_approved_by)`,
+              [
+                u.id,
+                u.name,
+                u.teamName,
+                u.email,
+                u.contact,
+                u.college,
+                u.location,
+                u.state,
+                u.country,
+                u.pincode,
+                u.topicTitle,
+                u.topicDomain,
+                u.presentedOn,
+                u.passwordHash,
+                u.role,
+                u.certificateStatus,
+                u.certificateId || null,
+                u.certificateApprovedAt || null,
+                u.certificateApprovedBy || null,
+                u.createdAt || new Date().toISOString(),
+              ]
+            ).catch(() => {});
+          }
+        }
+      } catch (err) {
+        console.error('Postgres initDatabase error:', err);
+      }
+    })();
+  }
+
+  await initPromise;
+}
+
+export function isPostgresConnected(): boolean {
+  return Boolean(process.env.POSTGRES_URL || process.env.DATABASE_URL);
+}
+
+export async function getAllUsers(): Promise<User[]> {
+  await initDatabase();
+  const p = getPool();
+  if (p) {
+    try {
+      const res = await p.query('SELECT * FROM users ORDER BY created_at DESC');
+      const users = res.rows.map(rowToUser);
+      memoryUsers = users;
+      return users;
+    } catch (err) {
+      console.error('Postgres getAllUsers error, falling back to memory:', err);
+    }
+  }
   return memoryUsers;
 }
 
-export function getUserByEmail(email: string): User | undefined {
-  initializeDatabase();
-  return memoryUsers.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
+export async function getUserByEmail(email: string): Promise<User | undefined> {
+  if (!email) return undefined;
+  await initDatabase();
+  const cleanEmail = email.trim().toLowerCase();
+  const p = getPool();
+  if (p) {
+    try {
+      const res = await p.query('SELECT * FROM users WHERE LOWER(email) = $1 LIMIT 1', [cleanEmail]);
+      if (res.rows.length > 0) {
+        return rowToUser(res.rows[0]);
+      }
+      return undefined;
+    } catch (err) {
+      console.error('Postgres getUserByEmail error, falling back to memory:', err);
+    }
+  }
+  return memoryUsers.find((u) => u.email.toLowerCase() === cleanEmail);
 }
 
-export function getUserById(id: string): User | undefined {
-  initializeDatabase();
+export async function getUserById(id: string): Promise<User | undefined> {
+  if (!id) return undefined;
+  await initDatabase();
+  const p = getPool();
+  if (p) {
+    try {
+      const res = await p.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
+      if (res.rows.length > 0) {
+        return rowToUser(res.rows[0]);
+      }
+      return undefined;
+    } catch (err) {
+      console.error('Postgres getUserById error, falling back to memory:', err);
+    }
+  }
   return memoryUsers.find((u) => u.id === id);
 }
 
-export function getUserByCertificateId(certId: string): User | undefined {
-  initializeDatabase();
+export async function getUserByCertificateId(certId: string): Promise<User | undefined> {
+  if (!certId) return undefined;
+  await initDatabase();
   const normalized = certId.trim().toUpperCase();
+  const p = getPool();
+  if (p) {
+    try {
+      const res = await p.query(
+        'SELECT * FROM users WHERE UPPER(certificate_id) = $1 LIMIT 1',
+        [normalized]
+      );
+      if (res.rows.length > 0) {
+        return rowToUser(res.rows[0]);
+      }
+      return undefined;
+    } catch (err) {
+      console.error('Postgres getUserByCertificateId error, falling back to memory:', err);
+    }
+  }
   return memoryUsers.find((u) => u.certificateId?.toUpperCase() === normalized);
 }
 
-export function createUser(userData: Omit<User, 'id' | 'createdAt' | 'certificateStatus'>): User {
-  initializeDatabase();
+export async function createUser(
+  userData: Omit<User, 'id' | 'createdAt' | 'certificateStatus'>
+): Promise<User> {
+  await initDatabase();
   const newUser: User = {
     ...userData,
     id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -215,42 +333,110 @@ export function createUser(userData: Omit<User, 'id' | 'createdAt' | 'certificat
     certificateStatus: 'NOT_REQUESTED',
   };
 
-  memoryUsers.push(newUser);
-  saveUsersToDisk(memoryUsers);
-
-  // If Postgres is connected, save asynchronously
-  if (pool) {
-    pool.query(
-      `INSERT INTO users (id, name, team_name, email, contact, college, location, state, country, pincode, topic_title, topic_domain, presented_on, password_hash, role, certificate_status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-       ON CONFLICT (email) DO NOTHING`,
-      [
-        newUser.id,
-        newUser.name,
-        newUser.teamName,
-        newUser.email,
-        newUser.contact,
-        newUser.college,
-        newUser.location,
-        newUser.state,
-        newUser.country,
-        newUser.pincode,
-        newUser.topicTitle,
-        newUser.topicDomain,
-        newUser.presentedOn,
-        newUser.passwordHash,
-        newUser.role,
-        newUser.certificateStatus,
-        newUser.createdAt,
-      ]
-    ).catch((err) => console.error('Postgres insert error:', err));
+  const p = getPool();
+  if (p) {
+    try {
+      await p.query(
+        `INSERT INTO users (
+           id, name, team_name, email, contact, college, location, state, country, pincode,
+           topic_title, topic_domain, presented_on, password_hash, role, created_at, certificate_status
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+         ON CONFLICT (email) DO UPDATE SET
+           name = EXCLUDED.name,
+           team_name = EXCLUDED.team_name,
+           contact = EXCLUDED.contact,
+           college = EXCLUDED.college,
+           location = EXCLUDED.location,
+           state = EXCLUDED.state,
+           country = EXCLUDED.country,
+           pincode = EXCLUDED.pincode,
+           topic_title = EXCLUDED.topic_title,
+           topic_domain = EXCLUDED.topic_domain,
+           presented_on = EXCLUDED.presented_on`,
+        [
+          newUser.id,
+          newUser.name,
+          newUser.teamName,
+          newUser.email,
+          newUser.contact,
+          newUser.college,
+          newUser.location,
+          newUser.state,
+          newUser.country,
+          newUser.pincode,
+          newUser.topicTitle,
+          newUser.topicDomain,
+          newUser.presentedOn,
+          newUser.passwordHash,
+          newUser.role,
+          newUser.createdAt,
+          newUser.certificateStatus,
+        ]
+      );
+    } catch (err) {
+      console.error('Postgres createUser error:', err);
+    }
   }
+
+  // Update memory and disk
+  const existingIdx = memoryUsers.findIndex((u) => u.email.toLowerCase() === newUser.email.toLowerCase());
+  if (existingIdx !== -1) {
+    memoryUsers[existingIdx] = newUser;
+  } else {
+    memoryUsers.unshift(newUser);
+  }
+  saveUsersToDisk(memoryUsers);
 
   return newUser;
 }
 
-export function updateUser(id: string, updates: Partial<User>): User | null {
-  initializeDatabase();
+export async function updateUser(id: string, updates: Partial<User>): Promise<User | null> {
+  await initDatabase();
+
+  const p = getPool();
+  if (p) {
+    try {
+      const existing = await getUserById(id);
+      if (!existing) return null;
+
+      const merged: User = { ...existing, ...updates };
+
+      await p.query(
+        `UPDATE users SET
+           certificate_status = $1,
+           certificate_id = $2,
+           certificate_approved_at = $3,
+           certificate_approved_by = $4,
+           rejection_reason = $5,
+           password_hash = $6,
+           reset_password_token = $7,
+           reset_password_expires = $8
+         WHERE id = $9`,
+        [
+          merged.certificateStatus,
+          merged.certificateId || null,
+          merged.certificateApprovedAt || null,
+          merged.certificateApprovedBy || null,
+          merged.rejectionReason || null,
+          merged.passwordHash,
+          merged.resetPasswordToken || null,
+          merged.resetPasswordExpires || null,
+          id,
+        ]
+      );
+
+      const memIdx = memoryUsers.findIndex((u) => u.id === id);
+      if (memIdx !== -1) {
+        memoryUsers[memIdx] = merged;
+      }
+      saveUsersToDisk(memoryUsers);
+      return merged;
+    } catch (err) {
+      console.error('Postgres updateUser error:', err);
+    }
+  }
+
+  // Fallback to memory
   const index = memoryUsers.findIndex((u) => u.id === id);
   if (index === -1) return null;
 
@@ -258,74 +444,51 @@ export function updateUser(id: string, updates: Partial<User>): User | null {
     ...memoryUsers[index],
     ...updates,
   };
-
   saveUsersToDisk(memoryUsers);
-
-  // If Postgres is connected, update row
-  if (pool) {
-    const u = memoryUsers[index];
-    pool.query(
-      `UPDATE users SET
-         certificate_status = $1,
-         certificate_id = $2,
-         certificate_approved_at = $3,
-         certificate_approved_by = $4,
-         rejection_reason = $5
-       WHERE id = $6`,
-      [
-        u.certificateStatus,
-        u.certificateId || null,
-        u.certificateApprovedAt || null,
-        u.certificateApprovedBy || null,
-        u.rejectionReason || null,
-        id,
-      ]
-    ).catch((err) => console.error('Postgres update error:', err));
-  }
-
   return memoryUsers[index];
 }
 
-export function requestCertificate(userId: string): User | null {
+export async function requestCertificate(userId: string): Promise<User | null> {
   return updateUser(userId, {
     certificateStatus: 'PENDING_APPROVAL',
   });
 }
 
-export function approveCertificate(userId: string, adminName: string): User | null {
-  initializeDatabase();
-  const user = getUserById(userId);
+export async function approveCertificate(userId: string, adminName: string): Promise<User | null> {
+  const user = await getUserById(userId);
   if (!user) return null;
 
-  // Generate unique certificate ID
   const randomSuffix = Math.floor(1000 + Math.random() * 9000);
   const certId = user.certificateId || `AVX-2026-NOV-${randomSuffix}`;
 
-  return updateUser(userId, {
+  const updated = await updateUser(userId, {
     certificateStatus: 'APPROVED',
     certificateId: certId,
     certificateApprovedAt: new Date().toISOString(),
     certificateApprovedBy: adminName || 'Dr. Rajesh Kumar (Director)',
     rejectionReason: undefined,
   });
+
+  return updated;
 }
 
-export function rejectCertificate(userId: string, reason: string): User | null {
+export async function rejectCertificate(userId: string, reason: string): Promise<User | null> {
   return updateUser(userId, {
     certificateStatus: 'REJECTED',
     rejectionReason: reason || 'Details did not match hackathon submission criteria.',
   });
 }
 
-export function createPasswordResetToken(email: string): { token: string; user: User } | null {
-  initializeDatabase();
-  const user = getUserByEmail(email);
+export async function createPasswordResetToken(
+  email: string
+): Promise<{ token: string; user: User } | null> {
+  const user = await getUserByEmail(email);
   if (!user) return null;
 
   const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
   const expires = new Date(Date.now() + 1000 * 60 * 60).toISOString(); // 1 hour
 
-  updateUser(user.id, {
+  await updateUser(user.id, {
     resetPasswordToken: token,
     resetPasswordExpires: expires,
   });
@@ -333,8 +496,27 @@ export function createPasswordResetToken(email: string): { token: string; user: 
   return { token, user };
 }
 
-export function getUserByResetToken(token: string): User | null {
-  initializeDatabase();
+export async function getUserByResetToken(token: string): Promise<User | null> {
+  await initDatabase();
+  const p = getPool();
+  if (p) {
+    try {
+      const res = await p.query(
+        `SELECT * FROM users
+         WHERE reset_password_token = $1
+           AND reset_password_expires > NOW()
+         LIMIT 1`,
+        [token]
+      );
+      if (res.rows.length > 0) {
+        return rowToUser(res.rows[0]);
+      }
+      return null;
+    } catch (err) {
+      console.error('Postgres getUserByResetToken error:', err);
+    }
+  }
+
   const user = memoryUsers.find(
     (u) =>
       u.resetPasswordToken === token &&
@@ -344,9 +526,11 @@ export function getUserByResetToken(token: string): User | null {
   return user || null;
 }
 
-export function resetPasswordWithToken(token: string, newPasswordHash: string): User | null {
-  initializeDatabase();
-  const user = getUserByResetToken(token);
+export async function resetPasswordWithToken(
+  token: string,
+  newPasswordHash: string
+): Promise<User | null> {
+  const user = await getUserByResetToken(token);
   if (!user) return null;
 
   return updateUser(user.id, {
@@ -355,4 +539,3 @@ export function resetPasswordWithToken(token: string, newPasswordHash: string): 
     resetPasswordExpires: undefined,
   });
 }
-

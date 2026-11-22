@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Password must be at least 6 characters long.' }, { status: 400 });
     }
 
-    const user = getUserByResetToken(token.trim());
+    const user = await getUserByResetToken(token.trim());
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid or expired password reset link. Please request a new one.' },
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     const newPasswordHash = await bcrypt.hash(password, 10);
-    const updatedUser = resetPasswordWithToken(token.trim(), newPasswordHash);
+    const updatedUser = await resetPasswordWithToken(token.trim(), newPasswordHash);
 
     if (!updatedUser) {
       return NextResponse.json(

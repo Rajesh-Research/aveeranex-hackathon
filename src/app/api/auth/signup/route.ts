@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
-    const existing = getUserByEmail(email.trim());
+    const existing = await getUserByEmail(email.trim());
     if (existing) {
       return NextResponse.json(
         { error: 'An account with this email address already exists. Please sign in.' },
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Create user
-    const newUser = createUser({
+    const newUser = await createUser({
       name: name.trim(),
       teamName: teamName.trim(),
       email: email.trim().toLowerCase(),
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Dispatch confirmation email to participant, alert to info@aveeranex.com & sync to Google Sheets
-    Promise.allSettled([
+    await Promise.allSettled([
       sendParticipantWelcomeEmail(newUser),
       sendRegistrationEmailAlert(newUser),
       syncToGoogleSheets(newUser),

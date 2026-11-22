@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserByCertificateId } from '@/lib/db';
 import { CertificateVerificationData } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -12,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: 'Certificate ID is required' }, { status: 400 });
     }
 
-    const user = getUserByCertificateId(certId);
+    const user = await getUserByCertificateId(certId);
 
     if (!user || user.certificateStatus !== 'APPROVED') {
       return NextResponse.json(

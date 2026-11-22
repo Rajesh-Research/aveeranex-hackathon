@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email address is required.' }, { status: 400 });
     }
 
-    const resetData = createPasswordResetToken(email.trim());
+    const resetData = await createPasswordResetToken(email.trim());
 
     if (!resetData) {
       // Return success for security so user enumeration is avoided, but provide helpful feedback

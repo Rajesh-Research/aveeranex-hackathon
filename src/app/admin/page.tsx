@@ -40,7 +40,10 @@ export default function AdminPage() {
     approved: 0,
     rejected: 0,
     notRequested: 0,
+    isPostgres: false,
   });
+  const [syncingSheets, setSyncingSheets] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
   // Filter & Search states
   const [searchQuery, setSearchQuery] = useState('');
@@ -201,7 +204,33 @@ export default function AdminPage() {
     await fetchParticipants();
   };
 
-  const handleExportCSV = () => {
+  const handleSyncToGoogleSheets = async () => {
+    setSyncingSheets(true);
+    setSyncMessage(null);
+    try {
+      const res = await fetch('/api/admin/sync-sheets', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setSyncMessage(data.message || `Successfully synced ${participants.length} participants to Google Sheets!`);
+        setTimeout(() => setSyncMessage(null), 6000);
+      } else {
+        alert(data.error || 'Failed to sync to Google Sheets');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error triggering Google Sheets sync.');
+    } finally {
+      setSyncingSheets(false);
+    }
+  };
+
+  const handleExportCSV = (exportAll = true) => {
+    const listToExport = exportAll ? participants : filteredParticipants;
+    if (listToExport.length === 0) {
+      alert('No participant records to export.');
+      return;
+    }
+
     const headers = [
       'Name',
       'Team Name',
@@ -210,28 +239,34 @@ export default function AdminPage() {
       'College',
       'Location',
       'State',
+      'Country',
+      'Pincode',
       'Topic Title',
       'Topic Domain',
       'Presented On',
       'Status',
       'Certificate ID',
       'Approved Date',
+      'Registered Date',
     ];
 
-    const rows = filteredParticipants.map((p) => [
-      `"${p.name}"`,
-      `"${p.teamName}"`,
-      `"${p.email}"`,
-      `"${p.contact}"`,
-      `"${p.college}"`,
-      `"${p.location}"`,
-      `"${p.state}"`,
-      `"${p.topicTitle.replace(/"/g, '""')}"`,
-      `"${p.topicDomain}"`,
-      `"${p.presentedOn}"`,
-      `"${p.certificateStatus}"`,
-      `"${p.certificateId || ''}"`,
-      `"${p.certificateApprovedAt || ''}"`,
+    const rows = listToExport.map((p) => [
+      `"${(p.name || '').replace(/"/g, '""')}"`,
+      `"${(p.teamName || '').replace(/"/g, '""')}"`,
+      `"${(p.email || '').replace(/"/g, '""')}"`,
+      `"${(p.contact || '').replace(/"/g, '""')}"`,
+      `"${(p.college || '').replace(/"/g, '""')}"`,
+      `"${(p.location || '').replace(/"/g, '""')}"`,
+      `"${(p.state || '').replace(/"/g, '""')}"`,
+      `"${(p.country || '').replace(/"/g, '""')}"`,
+      `"${(p.pincode || '').replace(/"/g, '""')}"`,
+      `"${(p.topicTitle || '').replace(/"/g, '""')}"`,
+      `"${(p.topicDomain || '').replace(/"/g, '""')}"`,
+      `"${(p.presentedOn || '').replace(/"/g, '""')}"`,
+      `"${(p.certificateStatus || '').replace(/"/g, '""')}"`,
+      `"${(p.certificateId || '').replace(/"/g, '""')}"`,
+      `"${(p.certificateApprovedAt || '').replace(/"/g, '""')}"`,
+      `"${(p.createdAt || '').replace(/"/g, '""')}"`,
     ]);
 
     const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -239,7 +274,7 @@ export default function AdminPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Aveeranex_Hackathon_Participants_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `Aveeranex_Hackathon_All_Participants_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
   };
 
@@ -340,26 +375,51 @@ export default function AdminPage() {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
             Certificate Authorization Console
           </h1>
-          <p className="text-slate-400 text-sm">
-            Signed in as <span className="text-white font-semibold">{currentUser.name}</span> ({currentUser.email})
-          </p>
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+            <span className="text-slate-400">
+              Signed in as <span className="text-white font-semibold">{currentUser.name}</span>
+            </span>
+            <span className="text-slate-600">&bull;</span>
+            {stats.isPostgres ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                Vercel Postgres Connected
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-950/80 border border-amber-500/40 text-amber-300 font-medium">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+                In-Memory Mode (Link Vercel Postgres for permanent storage)
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={fetchParticipants}
             className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-            title="Refresh"
+            title="Refresh participant list"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
 
           <button
-            onClick={handleExportCSV}
+            onClick={handleSyncToGoogleSheets}
+            disabled={syncingSheets}
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 text-xs font-semibold border border-emerald-500/30 transition-all disabled:opacity-50"
+            title="Sync all registered and approved participants directly to Google Sheets"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${syncingSheets ? 'animate-spin' : ''}`} />
+            <span>{syncingSheets ? 'Syncing...' : 'Sync to Sheets'}</span>
+          </button>
+
+          <button
+            onClick={() => handleExportCSV(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all"
+            title="Download complete participant database as CSV/Excel"
           >
             <Download className="w-4 h-4 text-cyan-400" />
-            <span>Export CSV</span>
+            <span>Export Excel/CSV ({participants.length})</span>
           </button>
 
           <button
@@ -371,6 +431,39 @@ export default function AdminPage() {
           </button>
         </div>
       </div>
+
+      {syncMessage && (
+        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{syncMessage}</span>
+          </div>
+          <button onClick={() => setSyncMessage(null)} className="text-slate-400 hover:text-white">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {!stats.isPostgres && (
+        <div className="p-4 rounded-2xl bg-amber-950/30 border border-amber-500/40 text-amber-200 text-xs space-y-1.5 shadow-lg">
+          <div className="flex items-center gap-2 font-bold text-amber-300 text-sm">
+            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>Permanent Storage Recommendation</span>
+          </div>
+          <p className="text-slate-300 text-xs leading-relaxed">
+            Your portal is currently running with serverless in-memory storage. On Vercel, serverless containers rotate periodically. To ensure all 12+ participant registrations, approvals, and certificate IDs are <strong>100% permanently stored across all cloud instances</strong>:
+          </p>
+          <div className="pt-1 flex flex-wrap items-center gap-2 font-mono text-[11px] text-amber-300">
+            <span>1. Open Vercel Dashboard</span>
+            <span>&rarr;</span>
+            <span>2. Click &quot;Storage&quot; tab</span>
+            <span>&rarr;</span>
+            <span>3. Click &quot;Create Database&quot; &rarr; &quot;Postgres&quot; (Neon)</span>
+            <span>&rarr;</span>
+            <span>4. Click &quot;Connect to Project&quot; (aveeranex-hackathon)</span>
+          </div>
+        </div>
+      )}
 
       {/* Overview Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
