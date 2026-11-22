@@ -39,3 +39,5 @@ crop_*
 test_cert_*
 name_area.png
 clean_template_*.png
+
+.vercel

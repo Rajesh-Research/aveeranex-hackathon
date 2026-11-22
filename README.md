@@ -69,7 +69,7 @@ Designed and built for **AVEERANEX (OPC) PRIVATE LIMITED** under the leadership 
 
 | Role | Email | Password | Access |
 |---|---|---|---|
-| **Super Admin** | `admin@aveeranex.com` | `Admin@Aveeranex2026!` | Full Admin Approval Portal (`/admin`) |
+| **Super Admin** | `info@aveeranex.com` | `aveeranex@123` | Full Admin Approval Portal (`/admin`) |
 | **Approved Demo User** | `innovator@aveeranex.com` | `Hackathon@2026` | Certificate Download & Social Sharing (`/dashboard`) |
 | **Pending Demo User** | `priya.s@university.edu` | `Hackathon@2026` | Pending Approval State Demo |
 

@@ -48,11 +48,11 @@ export function initializeDatabase() {
   let users = loadUsersFromDisk();
 
   // Check if super admin exists
-  const adminEmail = 'admin@aveeranex.com';
+  const adminEmail = 'info@aveeranex.com';
   const existingAdmin = users.find((u) => u.email.toLowerCase() === adminEmail);
 
   if (!existingAdmin) {
-    const adminPasswordHash = bcrypt.hashSync('Admin@Aveeranex2026!', 10);
+    const adminPasswordHash = bcrypt.hashSync('aveeranex@123', 10);
     const superAdmin: User = {
       id: 'usr_admin_001',
       name: 'Dr. Rajesh Kumar (Director)',

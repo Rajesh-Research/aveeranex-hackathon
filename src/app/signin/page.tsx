@@ -61,8 +61,8 @@ export default function SigninPage() {
   const handleFillDemo = (type: 'user' | 'admin') => {
     if (type === 'admin') {
       setFormData({
-        email: 'admin@aveeranex.com',
-        password: 'Admin@Aveeranex2026!',
+        email: 'info@aveeranex.com',
+        password: 'aveeranex@123',
       });
     } else {
       setFormData({

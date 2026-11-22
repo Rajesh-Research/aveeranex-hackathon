@@ -70,14 +70,6 @@ export default function Navbar() {
                 priority
               />
             </div>
-            <div className="hidden sm:flex flex-col border-l border-slate-700/80 pl-3">
-              <span className="text-[11px] font-bold tracking-widest text-aveeranex-cyan uppercase">
-                HACKATHON PORTAL
-              </span>
-              <span className="text-[10px] text-slate-400 font-mono">
-                Nov&apos;26 Edition
-              </span>
-            </div>
           </Link>
 
           {/* Desktop Navigation Links */}

@@ -32,11 +32,11 @@ export default function HomePage() {
             <span>Official Finale Round Issuance & Verification</span>
           </div>
 
-          {/* Heading */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1]">
-            AVEERANEX <span className="text-transparent bg-clip-text bg-gradient-to-r from-aveeranex-teal via-cyan-400 to-emerald-400">INNOVATE</span>
+          {/* Heading with slim geometric font matching logo */}
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-light tracking-[0.22em] text-white leading-[1.25] uppercase">
+            AVEERANEX <span className="font-normal text-transparent bg-clip-text bg-gradient-to-r from-aveeranex-teal via-cyan-400 to-emerald-400">INNOVATE</span>
             <br />
-            ONLINE HACKATHON
+            <span className="text-2xl sm:text-4xl lg:text-4xl font-extralight tracking-[0.3em] text-slate-300">ONLINE HACKATHON</span>
           </h1>
 
           <p className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed">
@@ -144,77 +144,6 @@ export default function HomePage() {
             <p className="text-slate-400 text-sm leading-relaxed">
               Download your official 300 DPI PDF certificate and share directly to LinkedIn, Instagram, and YouTube.
             </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Certificate Showcase Card */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-aveeranex-border/40">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-semibold uppercase font-mono">
-              <FileCheck className="w-4 h-4" />
-              Official Fixed Template
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
-              Tamper-Proof Digital Certificates with QR Verification
-            </h2>
-            <p className="text-slate-300 text-base leading-relaxed">
-              Every certificate issued by <span className="text-white font-semibold">AVEERANEX (OPC) PRIVATE LIMITED</span> includes a unique verification identifier, Director signature, authorized seal, and a real-time QR code that employers and universities can scan to authenticate.
-            </p>
-
-            <ul className="space-y-3 text-sm text-slate-300">
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-aveeranex-cyan flex-shrink-0" />
-                <span>Pixel-perfect high-resolution template matching the official finale standard</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-aveeranex-cyan flex-shrink-0" />
-                <span>Digitally signed by Director Dr. Rajesh Kumar</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-aveeranex-cyan flex-shrink-0" />
-                <span>Download as high-definition A4 PDF or 300 DPI PNG</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-aveeranex-cyan flex-shrink-0" />
-                <span>One-click tagging for LinkedIn, Instagram, and YouTube</span>
-              </li>
-            </ul>
-
-            <div className="pt-2">
-              <Link
-                href="/signup"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-aveeranex-teal hover:bg-cyan-600 text-white font-semibold text-sm transition-all shadow-lg shadow-teal-950/40"
-              >
-                <span>Get Your Certificate</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Certificate Mockup Preview */}
-          <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-aveeranex-border/80 bg-slate-900 group">
-            <div className="relative aspect-[3508/2479] w-full">
-              <Image
-                src="/assets/certificate-template.png"
-                alt="AVEERANEX Certificate Template"
-                fill
-                className="object-cover"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-6">
-                <div className="flex items-center justify-between w-full">
-                  <div>
-                    <div className="text-xs font-mono text-cyan-300">CERTIFICATE OF PARTICIPATION</div>
-                    <div className="text-lg font-bold text-white">AVEERANEX INNOVATE ONLINE HACKATHON</div>
-                  </div>
-                  <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold">
-                    Verified
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>

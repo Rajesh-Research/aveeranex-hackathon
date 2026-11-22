@@ -3,7 +3,7 @@
     "id": "usr_admin_001",
     "name": "Dr. Rajesh Kumar (Director)",
     "teamName": "AVEERANEX Leadership",
-    "email": "admin@aveeranex.com",
+    "email": "info@aveeranex.com",
     "contact": "+91 9876543210",
     "college": "AVEERANEX Headquarters",
     "location": "Bengaluru",
@@ -13,7 +13,7 @@
     "topicTitle": "AVEERANEX Innovate Hackathon 2026 Super Admin",
     "topicDomain": "Leadership & Research",
     "presentedOn": "AVEERANEX INNOVATE ONLINE HACKATHON  Nov'26",
-    "passwordHash": "$2a$10$TKvxBP.Y1S4thwdlM0KL5.pPv2O3CeYFqZRY4BOebHpQ2ZNXGqstG",
+    "passwordHash": "$2a$10$GNQ3j9UiE2jMqA1UZ7UFyum3oqE4EmPGS0ZUVD/HYAD2UY2vfJJhS",
     "role": "admin",
     "createdAt": "2026-11-20T10:00:00.000Z",
     "certificateStatus": "APPROVED",
@@ -60,7 +60,10 @@
     "passwordHash": "$2a$10$tktUGlyuZ/UwZWMNP1uZ3ugcfwnCY9czPNPH9WmnjSapgibBaAaJW",
     "role": "user",
     "createdAt": "2026-11-22T08:20:00.000Z",
-    "certificateStatus": "PENDING_APPROVAL"
+    "certificateStatus": "APPROVED",
+    "certificateId": "AVX-2026-NOV-7060",
+    "certificateApprovedAt": "2026-11-22T12:50:55.512Z",
+    "certificateApprovedBy": "Dr. Rajesh Kumar (Director)"
   },
   {
     "name": "Kavya Ramesh",

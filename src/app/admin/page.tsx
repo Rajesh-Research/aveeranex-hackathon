@@ -51,8 +51,8 @@ export default function AdminPage() {
   const [rejectReason, setRejectReason] = useState('Presentation details did not meet hackathon criteria.');
 
   // Admin login form states (if not logged in as admin)
-  const [adminEmail, setAdminEmail] = useState('admin@aveeranex.com');
-  const [adminPassword, setAdminPassword] = useState('Admin@Aveeranex2026!');
+  const [adminEmail, setAdminEmail] = useState('info@aveeranex.com');
+  const [adminPassword, setAdminPassword] = useState('aveeranex@123');
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
