@@ -61,12 +61,12 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative h-11 w-44 md:w-52 transition-transform duration-200 group-hover:scale-[1.02]">
+            <div className="relative h-11 w-48 md:w-56 transition-transform duration-200 group-hover:scale-[1.02]">
               <Image
                 src="/assets/logo.png"
                 alt="AVEERANEX"
                 fill
-                className="object-contain"
+                className="object-contain object-left"
                 priority
               />
             </div>

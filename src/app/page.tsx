@@ -68,29 +68,6 @@ export default function HomePage() {
               <span>Verify Certificate</span>
             </Link>
           </div>
-
-          {/* Event Metadata Banner */}
-          <div className="pt-10 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto text-left">
-            <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
-              <div className="text-xs text-slate-400 font-mono">EDITION</div>
-              <div className="text-sm font-bold text-white mt-1">Nov&apos;26 Finale</div>
-            </div>
-            <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
-              <div className="text-xs text-slate-400 font-mono">STATUS</div>
-              <div className="text-sm font-bold text-emerald-400 mt-1 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                Certificates Active
-              </div>
-            </div>
-            <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
-              <div className="text-xs text-slate-400 font-mono">VERIFICATION</div>
-              <div className="text-sm font-bold text-aveeranex-cyan mt-1">Admin Approved</div>
-            </div>
-            <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800">
-              <div className="text-xs text-slate-400 font-mono">DIRECTOR</div>
-              <div className="text-sm font-bold text-white mt-1">Dr Rajesh Kumar</div>
-            </div>
-          </div>
         </div>
       </section>
 

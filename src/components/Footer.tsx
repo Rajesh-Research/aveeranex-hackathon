@@ -24,7 +24,7 @@ export default function Footer() {
                 src="/assets/logo.png"
                 alt="AVEERANEX"
                 fill
-                className="object-contain"
+                className="object-contain object-left"
               />
             </div>
             <p className="text-slate-400 max-w-md text-sm leading-relaxed">
