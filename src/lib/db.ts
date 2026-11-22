@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
+import { Pool } from '@neondatabase/serverless';
 import { User, CertificateStatus } from './types';
 
 const DB_DIR = path.join(process.cwd(), 'data');
@@ -9,6 +10,18 @@ const DB_FILE = path.join(DB_DIR, 'db.json');
 // In-memory cache
 let memoryUsers: User[] = [];
 let initialized = false;
+
+// Postgres connection if configured
+const postgresUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+let pool: Pool | null = null;
+
+if (postgresUrl) {
+  try {
+    pool = new Pool({ connectionString: postgresUrl });
+  } catch (err) {
+    console.error('Error creating Postgres pool:', err);
+  }
+}
 
 function ensureDataDirectory() {
   try {
@@ -39,6 +52,40 @@ function saveUsersToDisk(users: User[]) {
     fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2), 'utf-8');
   } catch (err) {
     console.error('Error saving users to disk:', err);
+  }
+}
+
+// Auto-create table in Postgres if connected
+async function initPostgresTable() {
+  if (!pool) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id VARCHAR(255) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        team_name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        contact VARCHAR(100) NOT NULL,
+        college VARCHAR(255) NOT NULL,
+        location VARCHAR(255) NOT NULL,
+        state VARCHAR(255) NOT NULL,
+        country VARCHAR(100) NOT NULL,
+        pincode VARCHAR(50) NOT NULL,
+        topic_title TEXT NOT NULL,
+        topic_domain VARCHAR(255) NOT NULL,
+        presented_on VARCHAR(255) NOT NULL,
+        password_hash TEXT NOT NULL,
+        role VARCHAR(50) NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        certificate_status VARCHAR(50) NOT NULL,
+        certificate_id VARCHAR(100),
+        certificate_approved_at TIMESTAMPTZ,
+        certificate_approved_by VARCHAR(255),
+        rejection_reason TEXT
+      );
+    `);
+  } catch (err) {
+    console.error('Error initializing Postgres table:', err);
   }
 }
 
@@ -130,6 +177,11 @@ export function initializeDatabase() {
 
   memoryUsers = users;
   saveUsersToDisk(users);
+
+  if (pool) {
+    initPostgresTable().catch((e) => console.error(e));
+  }
+
   initialized = true;
 }
 
@@ -165,6 +217,35 @@ export function createUser(userData: Omit<User, 'id' | 'createdAt' | 'certificat
 
   memoryUsers.push(newUser);
   saveUsersToDisk(memoryUsers);
+
+  // If Postgres is connected, save asynchronously
+  if (pool) {
+    pool.query(
+      `INSERT INTO users (id, name, team_name, email, contact, college, location, state, country, pincode, topic_title, topic_domain, presented_on, password_hash, role, certificate_status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+       ON CONFLICT (email) DO NOTHING`,
+      [
+        newUser.id,
+        newUser.name,
+        newUser.teamName,
+        newUser.email,
+        newUser.contact,
+        newUser.college,
+        newUser.location,
+        newUser.state,
+        newUser.country,
+        newUser.pincode,
+        newUser.topicTitle,
+        newUser.topicDomain,
+        newUser.presentedOn,
+        newUser.passwordHash,
+        newUser.role,
+        newUser.certificateStatus,
+        newUser.createdAt,
+      ]
+    ).catch((err) => console.error('Postgres insert error:', err));
+  }
+
   return newUser;
 }
 
@@ -179,6 +260,29 @@ export function updateUser(id: string, updates: Partial<User>): User | null {
   };
 
   saveUsersToDisk(memoryUsers);
+
+  // If Postgres is connected, update row
+  if (pool) {
+    const u = memoryUsers[index];
+    pool.query(
+      `UPDATE users SET
+         certificate_status = $1,
+         certificate_id = $2,
+         certificate_approved_at = $3,
+         certificate_approved_by = $4,
+         rejection_reason = $5
+       WHERE id = $6`,
+      [
+        u.certificateStatus,
+        u.certificateId || null,
+        u.certificateApprovedAt || null,
+        u.certificateApprovedBy || null,
+        u.rejectionReason || null,
+        id,
+      ]
+    ).catch((err) => console.error('Postgres update error:', err));
+  }
+
   return memoryUsers[index];
 }
 
