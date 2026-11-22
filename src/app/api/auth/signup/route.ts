@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { getUserByEmail, createUser } from '@/lib/db';
 import { signToken, toPublicUser } from '@/lib/auth';
-import { sendRegistrationEmailAlert, syncToGoogleSheets } from '@/lib/notifications';
+import {
+  sendRegistrationEmailAlert,
+  syncToGoogleSheets,
+  sendParticipantWelcomeEmail,
+} from '@/lib/notifications';
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,8 +85,9 @@ export async function POST(request: NextRequest) {
       role: 'user',
     });
 
-    // Dispatch email alert to info@aveeranex.com & sync to Google Sheets asynchronously
+    // Dispatch confirmation email to participant, alert to info@aveeranex.com & sync to Google Sheets
     Promise.allSettled([
+      sendParticipantWelcomeEmail(newUser),
       sendRegistrationEmailAlert(newUser),
       syncToGoogleSheets(newUser),
     ]).catch((e) => console.error('Notification dispatch error:', e));

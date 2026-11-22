@@ -316,3 +316,43 @@ export function rejectCertificate(userId: string, reason: string): User | null {
     rejectionReason: reason || 'Details did not match hackathon submission criteria.',
   });
 }
+
+export function createPasswordResetToken(email: string): { token: string; user: User } | null {
+  initializeDatabase();
+  const user = getUserByEmail(email);
+  if (!user) return null;
+
+  const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+  const expires = new Date(Date.now() + 1000 * 60 * 60).toISOString(); // 1 hour
+
+  updateUser(user.id, {
+    resetPasswordToken: token,
+    resetPasswordExpires: expires,
+  });
+
+  return { token, user };
+}
+
+export function getUserByResetToken(token: string): User | null {
+  initializeDatabase();
+  const user = memoryUsers.find(
+    (u) =>
+      u.resetPasswordToken === token &&
+      u.resetPasswordExpires &&
+      new Date(u.resetPasswordExpires) > new Date()
+  );
+  return user || null;
+}
+
+export function resetPasswordWithToken(token: string, newPasswordHash: string): User | null {
+  initializeDatabase();
+  const user = getUserByResetToken(token);
+  if (!user) return null;
+
+  return updateUser(user.id, {
+    passwordHash: newPasswordHash,
+    resetPasswordToken: undefined,
+    resetPasswordExpires: undefined,
+  });
+}
+

@@ -24,6 +24,8 @@ export interface User {
   certificateApprovedAt?: string;
   certificateApprovedBy?: string;
   rejectionReason?: string;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: string;
 }
 
 export interface PublicParticipantInfo {

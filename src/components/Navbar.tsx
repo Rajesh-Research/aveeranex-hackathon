@@ -105,16 +105,18 @@ export default function Navbar() {
               <span>Verify</span>
             </Link>
 
-            <Link
-              href="/admin"
-              className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${
-                pathname === '/admin' ? 'text-aveeranex-cyan' : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-cyan-950 text-cyan-300 border border-cyan-800">
-                Super Admin
-              </span>
-            </Link>
+            {currentUser?.role === 'admin' && (
+              <Link
+                href="/admin"
+                className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${
+                  pathname === '/admin' ? 'text-aveeranex-cyan' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-cyan-950 text-cyan-300 border border-cyan-800">
+                  Super Admin
+                </span>
+              </Link>
+            )}
 
             <a
               href="https://www.aveeranex.com/products/learn"
@@ -210,13 +212,15 @@ export default function Navbar() {
           >
             Verify Certificate
           </Link>
-          <Link
-            href="/admin"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-cyan-300 hover:bg-slate-900"
-          >
-            Super Admin Portal
-          </Link>
+          {currentUser?.role === 'admin' && (
+            <Link
+              href="/admin"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2 rounded-lg text-base font-medium text-cyan-300 hover:bg-slate-900"
+            >
+              Super Admin Portal
+            </Link>
+          )}
           <a
             href="https://www.aveeranex.com/products/learn"
             target="_blank"

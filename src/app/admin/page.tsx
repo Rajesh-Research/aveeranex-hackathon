@@ -51,8 +51,8 @@ export default function AdminPage() {
   const [rejectReason, setRejectReason] = useState('Presentation details did not meet hackathon criteria.');
 
   // Admin login form states (if not logged in as admin)
-  const [adminEmail, setAdminEmail] = useState('info@aveeranex.com');
-  const [adminPassword, setAdminPassword] = useState('aveeranex@123');
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
@@ -292,6 +292,7 @@ export default function AdminPage() {
                   required
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
+                  placeholder="Enter authorized admin email"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm outline-none focus:border-aveeranex-cyan"
                 />
               </div>
@@ -306,6 +307,7 @@ export default function AdminPage() {
                 <input
                   type="password"
                   required
+                  placeholder="••••••••"
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm outline-none focus:border-aveeranex-cyan"
@@ -321,12 +323,6 @@ export default function AdminPage() {
               {loginLoading ? 'Authenticating...' : 'Sign In as Super Admin'}
             </button>
           </form>
-
-          <div className="mt-6 pt-4 border-t border-slate-800 text-center">
-            <span className="text-[11px] text-slate-500">
-              Default pre-configured credentials loaded for evaluation.
-            </span>
-          </div>
         </div>
       </div>
     );

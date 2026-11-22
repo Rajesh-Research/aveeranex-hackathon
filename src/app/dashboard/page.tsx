@@ -226,7 +226,7 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            <div className="pt-2 flex items-center justify-center gap-4">
+            <div className="pt-2 flex items-center justify-center">
               <button
                 onClick={fetchUserData}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm border border-slate-700 transition-all"
@@ -234,13 +234,6 @@ export default function DashboardPage() {
                 <RefreshCw className="w-4 h-4" />
                 <span>Check Approval Status</span>
               </button>
-
-              <Link
-                href="/admin"
-                className="inline-flex items-center gap-1.5 text-xs text-cyan-400 hover:underline"
-              >
-                <span>Admin Login Portal &rarr;</span>
-              </Link>
             </div>
           </div>
         )}

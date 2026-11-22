@@ -58,20 +58,6 @@ export default function SigninPage() {
     }
   };
 
-  const handleFillDemo = (type: 'user' | 'admin') => {
-    if (type === 'admin') {
-      setFormData({
-        email: 'info@aveeranex.com',
-        password: 'aveeranex@123',
-      });
-    } else {
-      setFormData({
-        email: 'innovator@aveeranex.com',
-        password: 'Hackathon@2026',
-      });
-    }
-  };
-
   return (
     <div className="min-h-screen py-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center relative">
       <div className="max-w-md w-full">
@@ -129,6 +115,12 @@ export default function SigninPage() {
                 <label className="block text-xs font-medium text-slate-300">
                   Password
                 </label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-aveeranex-cyan hover:underline transition-colors"
+                >
+                  Forgot password?
+                </Link>
               </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
@@ -162,29 +154,6 @@ export default function SigninPage() {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Access Buttons */}
-          <div className="mt-6 pt-6 border-t border-slate-800 space-y-2">
-            <div className="text-[11px] font-mono text-slate-400 text-center uppercase tracking-wider mb-2">
-              Quick Test Credentials
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleFillDemo('user')}
-                className="py-2 px-3 rounded-lg bg-slate-900 border border-slate-700 hover:border-aveeranex-cyan/50 text-slate-300 hover:text-white text-xs transition-colors"
-              >
-                Participant Demo
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFillDemo('admin')}
-                className="py-2 px-3 rounded-lg bg-cyan-950/50 border border-cyan-800/80 hover:border-cyan-400 text-cyan-300 hover:text-cyan-200 text-xs transition-colors"
-              >
-                Super Admin Demo
-              </button>
-            </div>
-          </div>
 
           {/* Switch to Signup */}
           <div className="mt-6 text-center text-xs text-slate-400">
