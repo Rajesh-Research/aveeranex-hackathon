@@ -133,41 +133,43 @@ function initMemoryDatabase() {
   if (memoryInitialized) return;
 
   let users = loadUsersFromDisk();
-  const adminEmail = 'info@aveeranex.com';
-  const existingAdmin = users.find((u) => u.email.toLowerCase() === adminEmail);
+  const adminEmails = ['info@aveeranex.com', 'kvrkkumarphd@gmail.com'];
+  const adminPasswordHash = bcrypt.hashSync('aveeranex@123', 10);
 
-  if (!existingAdmin) {
-    const adminPasswordHash = bcrypt.hashSync('aveeranex@123', 10);
-    const superAdmin: User = {
-      id: 'usr_admin_001',
-      name: 'Dr. Rajesh Kumar (Director)',
-      teamName: 'AVEERANEX Leadership',
-      email: adminEmail,
-      contact: '+91 9876543210',
-      college: 'AVEERANEX Headquarters',
-      location: 'Bengaluru',
-      state: 'Karnataka',
-      country: 'India',
-      pincode: '560001',
-      topicTitle: 'AVEERANEX Innovate Hackathon 2026 Super Admin',
-      topicDomain: 'Leadership & Research',
-      presentedOn: "AVEERANEX INNOVATE ONLINE HACKATHON  Nov'26",
-      passwordHash: adminPasswordHash,
-      role: 'super_admin',
-      category: 'ADMIN',
-      canApproveCertificates: true,
-      createdAt: '2026-11-20T10:00:00.000Z',
-      certificateStatus: 'APPROVED',
-      certificateId: 'AVX-2026-NOV-ADMIN',
-      certificateApprovedAt: '2026-11-22T10:00:00.000Z',
-      certificateApprovedBy: 'SUPER_ADMIN',
-    };
-    users.unshift(superAdmin);
-  } else {
-    existingAdmin.role = 'super_admin';
-    existingAdmin.category = 'ADMIN';
-    existingAdmin.canApproveCertificates = true;
-  }
+  adminEmails.forEach((email, idx) => {
+    const existing = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    if (!existing) {
+      const superAdmin: User = {
+        id: `usr_admin_00${idx + 1}`,
+        name: 'Dr. Rajesh Kumar (Director)',
+        teamName: 'AVEERANEX Leadership',
+        email: email,
+        contact: '+91 9876543210',
+        college: 'AVEERANEX Headquarters',
+        location: 'Bengaluru',
+        state: 'Karnataka',
+        country: 'India',
+        pincode: '560001',
+        topicTitle: 'AVEERANEX Innovate Hackathon 2026 Super Admin',
+        topicDomain: 'Leadership & Research',
+        presentedOn: "AVEERANEX INNOVATE ONLINE HACKATHON  Nov'26",
+        passwordHash: adminPasswordHash,
+        role: 'super_admin',
+        category: 'ADMIN',
+        canApproveCertificates: true,
+        createdAt: '2026-11-20T10:00:00.000Z',
+        certificateStatus: 'APPROVED',
+        certificateId: `AVX-2026-NOV-ADMIN${idx > 0 ? idx + 1 : ''}`,
+        certificateApprovedAt: '2026-11-22T10:00:00.000Z',
+        certificateApprovedBy: 'SUPER_ADMIN',
+      };
+      users.unshift(superAdmin);
+    } else {
+      existing.role = 'super_admin';
+      existing.category = 'ADMIN';
+      existing.canApproveCertificates = true;
+    }
+  });
 
   // Ensure all users have category
   users.forEach((u) => {
@@ -260,39 +262,31 @@ export async function initDatabase(): Promise<void> {
           ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMPTZ;
         `);
 
-        // Check if super admin exists in Postgres
-        const adminRes = await p.query(
-          'SELECT id FROM users WHERE LOWER(email) = $1 LIMIT 1',
-          ['info@aveeranex.com']
-        );
+        // Check if super admins exist in Postgres (info@aveeranex.com & kvrkkumarphd@gmail.com)
+        const adminList = [
+          { id: 'usr_admin_001', email: 'info@aveeranex.com', certId: 'AVX-2026-NOV-ADMIN' },
+          { id: 'usr_admin_002', email: 'kvrkkumarphd@gmail.com', certId: 'AVX-2026-NOV-ADMIN2' },
+        ];
+        const adminPasswordHash = bcrypt.hashSync('aveeranex@123', 10);
 
-        if (adminRes.rows.length === 0) {
-          const adminPasswordHash = bcrypt.hashSync('aveeranex@123', 10);
+        for (const adm of adminList) {
           await p.query(
             `INSERT INTO users (
                id, name, team_name, email, contact, college, location, state, country, pincode,
                topic_title, topic_domain, presented_on, password_hash, role, category, can_approve_certificates,
                certificate_status, certificate_id, certificate_approved_at, certificate_approved_by, created_at
              ) VALUES (
-               'usr_admin_001', 'Dr. Rajesh Kumar (Director)', 'AVEERANEX Leadership', 'info@aveeranex.com',
+               $1, 'Dr. Rajesh Kumar (Director)', 'AVEERANEX Leadership', $2,
                '+91 9876543210', 'AVEERANEX Headquarters', 'Bengaluru', 'Karnataka', 'India', '560001',
                'AVEERANEX Innovate Hackathon 2026 Super Admin', 'Leadership & Research',
-               'AVEERANEX INNOVATE ONLINE HACKATHON  Nov''26', $1, 'super_admin', 'ADMIN', true, 'APPROVED',
-               'AVX-2026-NOV-ADMIN', NOW(), 'SUPER_ADMIN', NOW()
+               'AVEERANEX INNOVATE ONLINE HACKATHON  Nov''26', $3, 'super_admin', 'ADMIN', true, 'APPROVED',
+               $4, NOW(), 'SUPER_ADMIN', NOW()
              ) ON CONFLICT (email) DO UPDATE SET
                role = 'super_admin',
                category = 'ADMIN',
                can_approve_certificates = true`,
-            [adminPasswordHash]
+            [adm.id, adm.email, adminPasswordHash, adm.certId]
           );
-        } else {
-          await p.query(`
-            UPDATE users SET
-              role = 'super_admin',
-              category = 'ADMIN',
-              can_approve_certificates = true
-            WHERE LOWER(email) = 'info@aveeranex.com'
-          `);
         }
 
         // Migrate existing rows safely to Participant category without overwriting any data

@@ -1,17 +1,37 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Mail, Lock, ArrowRight, ShieldCheck, AlertCircle, CheckCircle2, KeyRound } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  Mail,
+  Lock,
+  ArrowRight,
+  ShieldCheck,
+  AlertCircle,
+  CheckCircle2,
+  KeyRound,
+  Search,
+} from 'lucide-react';
 
 export default function SigninPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const emailParam = searchParams.get('email');
 
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+
+  useEffect(() => {
+    if (emailParam) {
+      setFormData((prev) => ({
+        ...prev,
+        email: emailParam,
+      }));
+    }
+  }, [emailParam]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +79,7 @@ export default function SigninPage() {
   };
 
   return (
-    <div className="min-h-screen py-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center relative">
+    <div className="min-h-screen py-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center relative bg-black">
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
@@ -76,7 +96,7 @@ export default function SigninPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-aveeranex-card/80 border border-aveeranex-border/80 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+        <div className="bg-zinc-950/90 border border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
           {error && (
             <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm flex items-start gap-3">
               <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -97,15 +117,15 @@ export default function SigninPage() {
                 E-mail Address
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5 pointer-events-none" />
                 <input
                   type="email"
                   name="email"
                   required
-                  placeholder="name@example.com"
+                  placeholder="name@example.com (or info@aveeranex.com)"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:border-aveeranex-cyan focus:ring-1 focus:ring-aveeranex-cyan outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 text-sm focus:border-aveeranex-cyan focus:ring-1 focus:ring-aveeranex-cyan outline-none transition-all"
                 />
               </div>
             </div>
@@ -117,13 +137,13 @@ export default function SigninPage() {
                 </label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs text-aveeranex-cyan hover:underline transition-colors"
+                  className="text-xs text-aveeranex-cyan hover:underline transition-colors font-medium"
                 >
-                  Forgot password?
+                  Forgot password or email?
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5 pointer-events-none" />
                 <input
                   type="password"
                   name="password"
@@ -131,7 +151,7 @@ export default function SigninPage() {
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:border-aveeranex-cyan focus:ring-1 focus:ring-aveeranex-cyan outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-white placeholder-zinc-500 text-sm focus:border-aveeranex-cyan focus:ring-1 focus:ring-aveeranex-cyan outline-none transition-all"
                 />
               </div>
             </div>
@@ -153,10 +173,21 @@ export default function SigninPage() {
                 </>
               )}
             </button>
+
+            {/* Quick Helper for forgotten email */}
+            <div className="pt-2 text-center">
+              <Link
+                href="/forgot-password?tab=find-email"
+                className="text-xs text-zinc-400 hover:text-cyan-300 inline-flex items-center gap-1.5 transition-colors"
+              >
+                <Search className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Forgot your registered email? Find Account</span>
+              </Link>
+            </div>
           </form>
 
           {/* Switch to Signup */}
-          <div className="mt-6 text-center text-xs text-slate-400">
+          <div className="mt-6 text-center text-xs text-slate-400 border-t border-zinc-800 pt-4">
             Don&apos;t have an account yet?{' '}
             <Link href="/signup" className="text-aveeranex-cyan font-semibold hover:underline">
               Register as Participant

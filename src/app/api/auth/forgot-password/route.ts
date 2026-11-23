@@ -16,21 +16,25 @@ export async function POST(request: NextRequest) {
     const resetData = await createPasswordResetToken(email.trim());
 
     if (!resetData) {
-      // Return success for security so user enumeration is avoided, but provide helpful feedback
-      return NextResponse.json({
-        message: 'If an account exists with this email, a password reset link has been dispatched.',
-      });
+      return NextResponse.json(
+        {
+          error: `No registered account found with email "${email.trim()}". Please check your spelling, or use the "Forgot Email / Find Account" tab below to search by phone number or name.`,
+        },
+        { status: 404 }
+      );
     }
 
-    const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://aveeranex-hackathon.vercel.app';
+    const origin =
+      request.headers.get('origin') ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      'https://aveeranex-hackathon.vercel.app';
     const resetLink = `${origin}/reset-password?token=${resetData.token}`;
 
     await sendPasswordResetEmail(resetData.user, resetLink);
 
     return NextResponse.json({
-      message: 'Password reset link sent to your email address.',
-      // In development / demo when SMTP is not yet configured, provide resetLink in response for smooth testing
-      debugResetLink: process.env.NODE_ENV !== 'production' || !process.env.SMTP_HOST ? resetLink : undefined,
+      message: 'Password reset link generated successfully.',
+      debugResetLink: resetLink,
     });
   } catch (error) {
     console.error('Forgot password error:', error);

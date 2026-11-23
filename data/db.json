@@ -14,12 +14,42 @@
     "topicDomain": "Leadership & Research",
     "presentedOn": "AVEERANEX INNOVATE ONLINE HACKATHON  Nov'26",
     "passwordHash": "$2a$10$GNQ3j9UiE2jMqA1UZ7UFyum3oqE4EmPGS0ZUVD/HYAD2UY2vfJJhS",
-    "role": "admin",
+    "role": "super_admin",
     "createdAt": "2026-11-20T10:00:00.000Z",
     "certificateStatus": "APPROVED",
     "certificateId": "AVX-2026-NOV-ADMIN",
     "certificateApprovedAt": "2026-11-22T10:00:00.000Z",
-    "certificateApprovedBy": "SUPER_ADMIN"
+    "certificateApprovedBy": "SUPER_ADMIN",
+    "category": "ADMIN",
+    "canApproveCertificates": true,
+    "resetPasswordToken": "d5ol0bj1palmwti8e2r",
+    "resetPasswordExpires": "2026-11-23T17:53:08.547Z"
+  },
+  {
+    "id": "usr_admin_002",
+    "name": "Dr. Rajesh Kumar (Director)",
+    "teamName": "AVEERANEX Leadership",
+    "email": "kvrkkumarphd@gmail.com",
+    "contact": "+91 9876543210",
+    "college": "AVEERANEX Headquarters",
+    "location": "Bengaluru",
+    "state": "Karnataka",
+    "country": "India",
+    "pincode": "560001",
+    "topicTitle": "AVEERANEX Innovate Hackathon 2026 Super Admin",
+    "topicDomain": "Leadership & Research",
+    "presentedOn": "AVEERANEX INNOVATE ONLINE HACKATHON  Nov'26",
+    "passwordHash": "$2a$10$GNQ3j9UiE2jMqA1UZ7UFyum3oqE4EmPGS0ZUVD/HYAD2UY2vfJJhS",
+    "role": "super_admin",
+    "createdAt": "2026-11-20T10:00:00.000Z",
+    "certificateStatus": "APPROVED",
+    "certificateId": "AVX-2026-NOV-ADMIN2",
+    "certificateApprovedAt": "2026-11-22T10:00:00.000Z",
+    "certificateApprovedBy": "SUPER_ADMIN",
+    "category": "ADMIN",
+    "canApproveCertificates": true,
+    "resetPasswordToken": "65udyxk0um2mwti8ot2",
+    "resetPasswordExpires": "2026-11-23T17:53:22.454Z"
   },
   {
     "id": "usr_part_001",
@@ -41,7 +71,11 @@
     "certificateStatus": "APPROVED",
     "certificateId": "AVX-2026-NOV-9841",
     "certificateApprovedAt": "2026-11-22T11:15:00.000Z",
-    "certificateApprovedBy": "Dr. Rajesh Kumar"
+    "certificateApprovedBy": "Dr. Rajesh Kumar",
+    "category": "PARTICIPANT",
+    "awardLevel": "PARTICIPATION",
+    "resetPasswordToken": "2ecxo9bhrr4mwti8ijp",
+    "resetPasswordExpires": "2026-11-23T17:53:14.341Z"
   },
   {
     "id": "usr_part_002",
@@ -63,7 +97,9 @@
     "certificateStatus": "APPROVED",
     "certificateId": "AVX-2026-NOV-7060",
     "certificateApprovedAt": "2026-11-22T12:50:55.512Z",
-    "certificateApprovedBy": "Dr. Rajesh Kumar (Director)"
+    "certificateApprovedBy": "Dr. Rajesh Kumar (Director)",
+    "category": "PARTICIPANT",
+    "awardLevel": "PARTICIPATION"
   },
   {
     "name": "Kavya Ramesh",
@@ -85,7 +121,9 @@
     "certificateStatus": "APPROVED",
     "certificateId": "AVX-2026-NOV-9494",
     "certificateApprovedAt": "2026-11-22T12:34:21.436Z",
-    "certificateApprovedBy": "Dr. Rajesh Kumar (Director)"
+    "certificateApprovedBy": "Dr. Rajesh Kumar (Director)",
+    "category": "PARTICIPANT",
+    "awardLevel": "PARTICIPATION"
   },
   {
     "id": "usr_1795360933122_8bhf1",
@@ -107,7 +145,9 @@
     "certificateStatus": "PENDING_APPROVAL",
     "certificateId": null,
     "certificateApprovedAt": null,
-    "certificateApprovedBy": null
+    "certificateApprovedBy": null,
+    "category": "PARTICIPANT",
+    "awardLevel": "PARTICIPATION"
   },
   {
     "id": "usr_1795360609513_y0ax0",
@@ -129,7 +169,9 @@
     "certificateStatus": "NOT_REQUESTED",
     "certificateId": null,
     "certificateApprovedAt": null,
-    "certificateApprovedBy": null
+    "certificateApprovedBy": null,
+    "category": "PARTICIPANT",
+    "awardLevel": "PARTICIPATION"
   },
   {
     "id": "usr_1795360518134_260ge",
@@ -151,7 +193,9 @@
     "certificateStatus": "PENDING_APPROVAL",
     "certificateId": null,
     "certificateApprovedAt": null,
-    "certificateApprovedBy": null
+    "certificateApprovedBy": null,
+    "category": "PARTICIPANT",
+    "awardLevel": "PARTICIPATION"
   },
   {
     "id": "usr_1795360414647_6a1b1",
@@ -173,7 +217,9 @@
     "certificateStatus": "PENDING_APPROVAL",
     "certificateId": null,
     "certificateApprovedAt": null,
-    "certificateApprovedBy": null
+    "certificateApprovedBy": null,
+    "category": "PARTICIPANT",
+    "awardLevel": "PARTICIPATION"
   },
   {
     "id": "usr_1795360282204_y7rkx",
@@ -195,7 +241,9 @@
     "certificateStatus": "PENDING_APPROVAL",
     "certificateId": null,
     "certificateApprovedAt": null,
-    "certificateApprovedBy": null
+    "certificateApprovedBy": null,
+    "category": "PARTICIPANT",
+    "awardLevel": "PARTICIPATION"
   },
   {
     "id": "usr_1795360201134_hfccm",
@@ -217,7 +265,9 @@
     "certificateStatus": "PENDING_APPROVAL",
     "certificateId": null,
     "certificateApprovedAt": null,
-    "certificateApprovedBy": null
+    "certificateApprovedBy": null,
+    "category": "PARTICIPANT",
+    "awardLevel": "PARTICIPATION"
   },
   {
     "id": "usr_recovered_11",
@@ -239,7 +289,9 @@
     "certificateStatus": "APPROVED",
     "certificateId": "AVX-2026-NOV-4230",
     "certificateApprovedAt": "2026-11-22T14:45:36.455Z",
-    "certificateApprovedBy": "Dr. Rajesh Kumar (Director)"
+    "certificateApprovedBy": "Dr. Rajesh Kumar (Director)",
+    "category": "PARTICIPANT",
+    "awardLevel": "PARTICIPATION"
   },
   {
     "id": "usr_recovered_12",
@@ -261,7 +313,9 @@
     "certificateStatus": "APPROVED",
     "certificateId": "AVX-2026-NOV-4074",
     "certificateApprovedAt": "2026-11-22T14:45:36.696Z",
-    "certificateApprovedBy": "Dr. Rajesh Kumar (Director)"
+    "certificateApprovedBy": "Dr. Rajesh Kumar (Director)",
+    "category": "PARTICIPANT",
+    "awardLevel": "PARTICIPATION"
   },
   {
     "id": "usr_recovered_13",
@@ -283,7 +337,9 @@
     "certificateStatus": "APPROVED",
     "certificateId": "AVX-2026-NOV-6260",
     "certificateApprovedAt": "2026-11-22T14:53:33.873Z",
-    "certificateApprovedBy": "Dr. Rajesh Kumar (Director)"
+    "certificateApprovedBy": "Dr. Rajesh Kumar (Director)",
+    "category": "PARTICIPANT",
+    "awardLevel": "PARTICIPATION"
   },
   {
     "id": "usr_recovered_14",
@@ -305,6 +361,8 @@
     "certificateStatus": "APPROVED",
     "certificateId": "AVX-2026-NOV-3786",
     "certificateApprovedAt": "2026-11-22T14:53:34.118Z",
-    "certificateApprovedBy": "Dr. Rajesh Kumar (Director)"
+    "certificateApprovedBy": "Dr. Rajesh Kumar (Director)",
+    "category": "PARTICIPANT",
+    "awardLevel": "PARTICIPATION"
   }
 ]
