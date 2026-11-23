@@ -1,202 +1,127 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
-  Award,
   ShieldCheck,
-  Sparkles,
   ArrowRight,
-  CheckCircle,
-  Users,
-  Code,
-  GraduationCap,
-  ExternalLink,
-  Cpu,
-  Layers,
-  FileCheck,
-  Share2,
+  Search,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function HomePage() {
+  const router = useRouter();
+  const [certId, setCertId] = useState('');
+
+  const handleVerify = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (certId.trim()) {
+      router.push(`/verify/${encodeURIComponent(certId.trim())}`);
+    } else {
+      router.push('/verify/AVX-2026-NOV-9841');
+    }
+  };
+
   return (
-    <div className="relative overflow-hidden">
-      {/* Background radial glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-cyan-500/10 via-teal-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
+    <div className="min-h-screen bg-black text-white selection:bg-cyan-500 selection:text-black flex flex-col justify-between">
+      {/* Subtle top ambient glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[420px] bg-gradient-to-b from-cyan-500/10 via-teal-500/5 to-transparent blur-3xl pointer-events-none" />
 
-      {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20 md:pt-20 md:pb-28">
-        <div className="text-center space-y-6 max-w-4xl mx-auto">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-aveeranex-card border border-aveeranex-cyan/30 text-aveeranex-cyan text-xs sm:text-sm font-semibold uppercase tracking-wider shadow-lg shadow-cyan-950/40">
-            <Sparkles className="w-4 h-4 text-aveeranex-cyan animate-spin" style={{ animationDuration: '6s' }} />
-            <span>Official Finale Round Issuance & Verification</span>
+      {/* HERO SECTION */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 md:pt-28 md:pb-20 text-center relative z-10">
+        {/* Stylish Display Headline - Logo Model Font Style */}
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-light tracking-[0.22em] text-white leading-[1.25] uppercase">
+          AVEERANEX{' '}
+          <span className="font-normal text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-cyan-300 to-emerald-400">
+            HACKATHON
+          </span>
+          <br />
+          <span className="font-extralight tracking-[0.3em] text-zinc-400 text-2xl sm:text-4xl lg:text-4xl">
+            PLATFORM
+          </span>
+        </h1>
+
+        {/* Clean Concise Subtitle */}
+        <p className="mt-6 text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto font-normal leading-relaxed">
+          Welcome to the official portal for{' '}
+          <span className="text-white font-semibold">
+            participants / corporates / colleges / universities
+          </span>{' '}
+          to host their hackathons and competitions.
+        </p>
+
+        {/* Primary Action Row */}
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-3.5">
+          <Link
+            href="/signup"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-aveeranex-teal via-cyan-500 to-emerald-500 hover:brightness-110 active:scale-[0.98] text-white font-bold text-sm shadow-lg shadow-cyan-950/40 transition-all"
+          >
+            <span>Register Now</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+
+          <Link
+            href="/signin"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-zinc-950 hover:bg-zinc-900 active:scale-[0.98] text-zinc-200 font-semibold text-sm border border-zinc-800 transition-all"
+          >
+            <span>Sign In</span>
+          </Link>
+
+          <Link
+            href="/verify/AVX-2026-NOV-9841"
+            className="inline-flex items-center gap-2 px-6 py-4 rounded-2xl bg-zinc-950 hover:border-emerald-500/50 text-emerald-400 font-semibold text-sm border border-zinc-800 transition-all"
+          >
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span>Verify Certificate</span>
+          </Link>
+        </div>
+
+        {/* Completed Edition Badge */}
+        <div className="mt-14 max-w-2xl mx-auto p-5 rounded-2xl bg-zinc-950/90 border border-zinc-800/90 flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-emerald-950/60 border border-emerald-800/60 text-emerald-400 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-400">
+                COMPLETED EDITION
+              </div>
+              <div className="text-base font-bold text-white">
+                AVEERANEX INNOVATE - NOV&apos;26
+              </div>
+            </div>
           </div>
-
-          {/* Heading with slim geometric font matching logo */}
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-light tracking-[0.22em] text-white leading-[1.25] uppercase">
-            AVEERANEX <span className="font-normal text-transparent bg-clip-text bg-gradient-to-r from-aveeranex-teal via-cyan-400 to-emerald-400">INNOVATE</span>
-            <br />
-            <span className="text-2xl sm:text-4xl lg:text-4xl font-extralight tracking-[0.3em] text-slate-300">ONLINE HACKATHON</span>
-          </h1>
-
-          <p className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed">
-            Welcome to the official portal for participants of the <span className="text-white font-medium">Nov&apos;26 Hackathon Edition</span>. Complete your project registration, request super admin verification, and generate your verified certificate of participation.
-          </p>
-
-          {/* Primary CTA Buttons */}
-          <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-aveeranex-teal via-cyan-500 to-emerald-500 text-white font-bold text-base shadow-xl shadow-cyan-900/40 hover:brightness-110 active:scale-[0.98] transition-all"
-            >
-              <span>Register for Certificate</span>
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-
-            <Link
-              href="/signin"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 font-semibold text-base border border-slate-700 hover:border-aveeranex-cyan/50 shadow-md transition-all active:scale-[0.98]"
-            >
-              <span>Participant Login</span>
-            </Link>
-
-            <Link
-              href="/verify/AVX-2026-NOV-9841"
-              className="inline-flex items-center gap-2 px-6 py-4 rounded-xl bg-slate-950/60 hover:bg-slate-900 text-emerald-400 font-semibold text-base border border-emerald-500/30 hover:border-emerald-500/60 transition-all"
-            >
-              <ShieldCheck className="w-5 h-5" />
-              <span>Verify Certificate</span>
-            </Link>
-          </div>
+          <Link
+            href="/verify/AVX-2026-NOV-9841"
+            className="px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-xs font-bold text-emerald-400 transition-colors shrink-0"
+          >
+            Verify Certificates &rarr;
+          </Link>
         </div>
       </section>
 
-      {/* Certificate Workflow Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-aveeranex-border/40">
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            How the Certificate Issuance Works
-          </h2>
-          <p className="text-slate-400 text-base mt-2">
-            A seamless four-step pipeline with multi-tier cryptographic verification and super admin review.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="p-6 rounded-2xl bg-aveeranex-card/50 border border-aveeranex-border/50 relative group hover:border-aveeranex-cyan/50 transition-all">
-            <div className="w-12 h-12 rounded-xl bg-aveeranex-teal/20 text-aveeranex-cyan flex items-center justify-center font-bold text-xl mb-4">
-              1
-            </div>
-            <h3 className="text-lg font-bold text-white mb-2">Participant Registration</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Sign up with your Name, Team Name, College, Topic Title, Domain, and Presentation details.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-aveeranex-card/50 border border-aveeranex-border/50 relative group hover:border-aveeranex-cyan/50 transition-all">
-            <div className="w-12 h-12 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xl mb-4">
-              2
-            </div>
-            <h3 className="text-lg font-bold text-white mb-2">Request Generation</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Click &quot;Generate Certificate&quot; on your dashboard to submit your presentation details for review.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-aveeranex-card/50 border border-aveeranex-border/50 relative group hover:border-aveeranex-cyan/50 transition-all">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xl mb-4">
-              3
-            </div>
-            <h3 className="text-lg font-bold text-white mb-2">Super Admin Review</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Super Admin verifies your presentation attendance and project submission criteria before approval.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-aveeranex-card/50 border border-aveeranex-border/50 relative group hover:border-aveeranex-cyan/50 transition-all">
-            <div className="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-xl mb-4">
-              4
-            </div>
-            <h3 className="text-lg font-bold text-white mb-2">Instant Download & Share</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Download your official 300 DPI PDF certificate and share directly to LinkedIn, Instagram, and YouTube.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Community Links Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-aveeranex-border/40">
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
-            Connect with the AVEERANEX Community
-          </h2>
-          <p className="text-slate-400 text-sm mt-1">
-            Follow our official handles, join upcoming innovation challenges, and register for AVEERANEX LEARN courses.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <a
-            href="https://www.linkedin.com/company/aveeranex"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-5 rounded-2xl bg-aveeranex-card/50 border border-aveeranex-border/50 hover:border-[#0a66c2]/50 hover:bg-[#0a66c2]/10 transition-all group"
+      {/* INSTANT CERTIFICATE VERIFICATION BAR */}
+      <section className="max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-24 text-center relative z-10">
+        <form
+          onSubmit={handleVerify}
+          className="flex items-center gap-2 p-2 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-lg focus-within:border-aveeranex-cyan transition-colors"
+        >
+          <Search className="w-4 h-4 text-zinc-500 ml-3 shrink-0" />
+          <input
+            type="text"
+            placeholder="Verify Certificate ID (e.g. AVX-2026-NOV-9841)"
+            value={certId}
+            onChange={(e) => setCertId(e.target.value)}
+            className="flex-1 bg-transparent py-2.5 px-2 text-sm text-white placeholder-zinc-500 outline-none"
+          />
+          <button
+            type="submit"
+            className="px-6 py-2.5 rounded-xl bg-aveeranex-teal hover:bg-cyan-600 text-white text-xs font-bold transition-colors"
           >
-            <div className="text-slate-400 group-hover:text-[#0a66c2] font-semibold text-sm mb-1">
-              LinkedIn
-            </div>
-            <div className="text-white font-bold text-base">@aveeranex</div>
-            <p className="text-slate-400 text-xs mt-2">
-              Tag our corporate page on your feed to celebrate your achievement with recruiters!
-            </p>
-          </a>
-
-          <a
-            href="https://www.instagram.com/aveeranex"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-5 rounded-2xl bg-aveeranex-card/50 border border-aveeranex-border/50 hover:border-[#E4405F]/50 hover:bg-[#E4405F]/10 transition-all group"
-          >
-            <div className="text-slate-400 group-hover:text-[#E4405F] font-semibold text-sm mb-1">
-              Instagram
-            </div>
-            <div className="text-white font-bold text-base">@aveeranex</div>
-            <p className="text-slate-400 text-xs mt-2">
-              Share your certificate in your stories and tag @aveeranex to get re-posted!
-            </p>
-          </a>
-
-          <a
-            href="https://www.youtube.com/@aveeranex"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-5 rounded-2xl bg-aveeranex-card/50 border border-aveeranex-border/50 hover:border-[#FF0000]/50 hover:bg-[#FF0000]/10 transition-all group"
-          >
-            <div className="text-slate-400 group-hover:text-[#FF0000] font-semibold text-sm mb-1">
-              YouTube
-            </div>
-            <div className="text-white font-bold text-base">@aveeranex</div>
-            <p className="text-slate-400 text-xs mt-2">
-              Watch hackathon project highlights, keynotes, and technical webinars.
-            </p>
-          </a>
-
-          <a
-            href="https://www.aveeranex.com/products/learn"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-5 rounded-2xl bg-aveeranex-card/50 border border-aveeranex-border/50 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all group"
-          >
-            <div className="text-slate-400 group-hover:text-emerald-400 font-semibold text-sm mb-1">
-              AVEERANEX LEARN
-            </div>
-            <div className="text-white font-bold text-base">Explore Programs</div>
-            <p className="text-slate-400 text-xs mt-2">
-              Advance your career with industry-oriented research and technology bootcamps.
-            </p>
-          </a>
-        </div>
+            Verify ID
+          </button>
+        </form>
       </section>
     </div>
   );

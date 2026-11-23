@@ -45,7 +45,7 @@ export default function SigninPage() {
 
       setSuccess('Signed in successfully! Redirecting...');
       setTimeout(() => {
-        if (data.user.role === 'admin') {
+        if (data.user.role === 'admin' || data.user.role === 'super_admin') {
           router.push('/admin');
         } else {
           router.push('/dashboard');

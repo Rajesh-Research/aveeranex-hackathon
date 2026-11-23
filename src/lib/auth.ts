@@ -11,6 +11,7 @@ export function signToken(user: User): string {
       userId: user.id,
       email: user.email,
       role: user.role,
+      category: user.category,
       name: user.name,
       teamName: user.teamName,
     },
@@ -19,7 +20,13 @@ export function signToken(user: User): string {
   );
 }
 
-export function verifyToken(token: string): { userId: string; email: string; role: string; name: string } | null {
+export function verifyToken(token: string): {
+  userId: string;
+  email: string;
+  role: string;
+  category?: string;
+  name: string;
+} | null {
   try {
     return jwt.verify(token, JWT_SECRET) as any;
   } catch (err) {
@@ -28,9 +35,7 @@ export function verifyToken(token: string): { userId: string; email: string; rol
 }
 
 export async function getAuthUserFromRequest(request: NextRequest): Promise<User | null> {
-  // Check cookie
   const tokenFromCookie = request.cookies.get('avx_token')?.value;
-  // Check authorization header
   const authHeader = request.headers.get('authorization');
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
 

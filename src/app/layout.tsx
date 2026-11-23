@@ -5,40 +5,36 @@ import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://aveeranex-hackathon.vercel.app'),
-  title: 'AVEERANEX INNOVATE ONLINE HACKATHON 2026 | Official Portal',
+  title: 'AVEERANEX HACKATHON PLATFORM | Official Portal',
   description:
-    'Official Portal for AVEERANEX INNOVATE ONLINE HACKATHON Nov 2026. Participant registration, presentation verification, super admin approvals, and verified digital certificate issuance.',
+    'Welcome to the official portal for participants / corporates / colleges / universities to host their hackathons and competitions.',
   keywords: [
     'Aveeranex',
-    'Hackathon 2026',
+    'Hackathon Platform',
+    'Aveeranex Hackathon',
     'Aveeranex Innovate',
+    'Host Hackathon',
     'Hackathon Certificate',
     'Online Hackathon',
     'Aveeranex Learn',
   ],
   icons: {
-    icon: '/assets/icon.png',
-    shortcut: '/favicon.ico',
-    apple: '/assets/icon.png',
+    icon: '/assets/logo.png',
+    shortcut: '/assets/logo.png',
+    apple: '/assets/logo.png',
   },
   openGraph: {
-    title: 'AVEERANEX INNOVATE ONLINE HACKATHON 2026 | Official Portal',
+    title: 'AVEERANEX HACKATHON PLATFORM | Official Portal',
     description:
-      'Official Portal for AVEERANEX INNOVATE ONLINE HACKATHON Nov 2026. Participant registration, presentation verification, super admin approvals, and verified digital certificate issuance.',
+      'Welcome to the official portal for participants / corporates / colleges / universities to host their hackathons and competitions.',
     url: 'https://aveeranex-hackathon.vercel.app',
-    siteName: 'AVEERANEX INNOVATE',
+    siteName: 'AVEERANEX HACKATHON PLATFORM',
     images: [
       {
-        url: '/assets/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'AVEERANEX INNOVATE ONLINE HACKATHON 2026',
-      },
-      {
-        url: '/assets/og-square.png',
-        width: 600,
-        height: 600,
-        alt: 'AVEERANEX Logo',
+        url: '/assets/logo.png',
+        width: 1017,
+        height: 167,
+        alt: 'AVEERANEX HACKATHON PLATFORM Logo',
       },
     ],
     locale: 'en_US',
@@ -46,10 +42,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AVEERANEX INNOVATE ONLINE HACKATHON 2026 | Official Portal',
+    title: 'AVEERANEX HACKATHON PLATFORM | Official Portal',
     description:
-      'Official Portal for AVEERANEX INNOVATE ONLINE HACKATHON Nov 2026. Participant registration, presentation verification, and verified digital certificate issuance.',
-    images: ['/assets/og-image.png'],
+      'Welcome to the official portal for participants / corporates / colleges / universities to host their hackathons and competitions.',
+    images: ['/assets/logo.png'],
   },
 };
 
@@ -60,7 +56,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="flex flex-col min-h-screen antialiased selection:bg-aveeranex-cyan selection:text-black">
+      <body className="flex flex-col min-h-screen antialiased bg-black text-white selection:bg-aveeranex-cyan selection:text-black">
         <Navbar />
         <main className="flex-grow">{children}</main>
         <Footer />

@@ -26,14 +26,25 @@ export async function GET(
       );
     }
 
+    const isParticipationLookup =
+      user.participationCertificateId &&
+      certId.trim().toUpperCase() === user.participationCertificateId.trim().toUpperCase();
+
     const verificationData: CertificateVerificationData = {
-      certificateId: user.certificateId || certId,
+      certificateId: isParticipationLookup ? user.participationCertificateId! : (user.certificateId || certId),
       participantName: user.name,
+      category: user.category || 'PARTICIPANT',
+      awardLevel: isParticipationLookup ? 'PARTICIPATION' : (user.awardLevel || 'PARTICIPATION'),
       teamName: user.teamName,
       topicTitle: user.topicTitle,
       topicDomain: user.topicDomain,
-      presentedOn: user.presentedOn,
+      presentedOn: user.assignedEvent || user.presentedOn,
       college: user.college,
+      organization: user.organization,
+      designation: user.designation,
+      specialization: user.specialization,
+      technicalResponsibility: user.technicalResponsibility,
+      committeeRole: user.committeeRole,
       issueDate: user.certificateApprovedAt
         ? new Date(user.certificateApprovedAt).toLocaleDateString('en-GB', {
             day: 'numeric',
@@ -43,7 +54,7 @@ export async function GET(
         : '22 November 2026',
       status: 'VALID',
       directorName: 'Dr. Rajesh Kumar',
-      organization: 'AVEERANEX (OPC) PRIVATE LIMITED',
+      organizationName: 'AVEERANEX (OPC) PRIVATE LIMITED',
       verificationHash: `SHA256-${Buffer.from(`${user.certificateId}:${user.email}`).toString('hex').slice(0, 16)}`,
     };
 

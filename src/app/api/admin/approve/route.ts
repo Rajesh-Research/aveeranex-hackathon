@@ -8,15 +8,22 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const caller = await getAuthUserFromRequest(request);
-    if (!caller || caller.role !== 'admin') {
+    if (!caller) {
+      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+    }
+
+    const isSuperAdmin = caller.role === 'super_admin' || caller.email.toLowerCase() === 'info@aveeranex.com';
+    const isAuthorizedAdmin = caller.role === 'admin' && Boolean(caller.canApproveCertificates);
+
+    if (!isSuperAdmin && !isAuthorizedAdmin) {
       return NextResponse.json(
-        { error: 'Forbidden. Super Admin access required.' },
+        { error: 'Forbidden. You do not have certificate approval privileges.' },
         { status: 403 }
       );
     }
 
     const body = await request.json();
-    const { userId } = body;
+    const { userId, awardLevel, includeParticipationToo, awardOrientation, runnerTheme } = body;
 
     if (!userId) {
       return NextResponse.json({ error: 'User ID is required.' }, { status: 400 });
@@ -24,10 +31,17 @@ export async function POST(request: NextRequest) {
 
     const targetUser = await getUserById(userId);
     if (!targetUser) {
-      return NextResponse.json({ error: 'Participant not found.' }, { status: 404 });
+      return NextResponse.json({ error: 'User not found.' }, { status: 404 });
     }
 
-    const updatedUser = await approveCertificate(userId, caller.name);
+    const updatedUser = await approveCertificate(
+      userId,
+      caller.name,
+      awardLevel,
+      includeParticipationToo !== undefined ? Boolean(includeParticipationToo) : true,
+      awardOrientation,
+      runnerTheme
+    );
     if (!updatedUser) {
       return NextResponse.json({ error: 'Failed to approve certificate.' }, { status: 500 });
     }

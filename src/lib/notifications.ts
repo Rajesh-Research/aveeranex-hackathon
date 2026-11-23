@@ -346,3 +346,122 @@ export async function sendPasswordResetEmail(user: User, resetLink: string): Pro
   }
 }
 
+/**
+ * Sends an email notification to Event Host Admin & info@aveeranex.com on project/presentation submission
+ */
+export async function sendProjectSubmissionAlert(
+  participant: User,
+  hostEmails: string[],
+  eventName: string,
+  fileName: string,
+  fileSizeStr: string,
+  githubUrl?: string,
+  notes?: string
+): Promise<boolean> {
+  try {
+    const recipients = Array.from(new Set([...hostEmails, config.recipientEmail])).filter(Boolean);
+
+    if (!config.smtpHost || !config.smtpUser || !config.smtpPass) {
+      console.log(
+        `[Submission Alert] Project submitted by ${participant.name} for "${eventName}". File: ${fileName} (${fileSizeStr}). Alert target emails: ${recipients.join(', ')}`
+      );
+      return false;
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: config.smtpHost,
+      port: config.smtpPort,
+      secure: config.smtpPort === 465,
+      auth: {
+        user: config.smtpUser,
+        pass: config.smtpPass,
+      },
+    });
+
+    const mailOptions = {
+      from: `"AVEERANEX Hackathon Submissions" <${config.smtpUser}>`,
+      to: recipients.join(', '),
+      subject: `📂 Project Submission: ${participant.name} - ${participant.teamName || 'Solo'} (${eventName})`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #050b14; color: #f8fafc; padding: 24px; border-radius: 12px; border: 1px solid #1e3a5f;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #067f92; margin: 0; text-transform: uppercase; letter-spacing: 2px;">AVEERANEX HACKATHON PLATFORM</h2>
+            <p style="color: #94a3b8; font-size: 13px; margin-top: 4px;">New Project Submission Received for Evaluation</p>
+          </div>
+
+          <div style="background: #0d223f; padding: 18px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #1e3a5f;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <tr>
+                <td style="padding: 8px 0; color: #94a3b8; width: 140px;"><strong>Hackathon Event:</strong></td>
+                <td style="padding: 8px 0; color: #38bdf8; font-weight: bold;">${eventName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #94a3b8;"><strong>Participant Name:</strong></td>
+                <td style="padding: 8px 0; color: #ffffff; font-weight: bold;">${participant.name}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #94a3b8;"><strong>Team Name:</strong></td>
+                <td style="padding: 8px 0; color: #00b4d8; font-weight: bold;">${participant.teamName || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #94a3b8;"><strong>Contact / Email:</strong></td>
+                <td style="padding: 8px 0; color: #ffffff;">${participant.email} • ${participant.contact || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #94a3b8;"><strong>College / Institution:</strong></td>
+                <td style="padding: 8px 0; color: #ffffff;">${participant.college || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #94a3b8;"><strong>Project Topic:</strong></td>
+                <td style="padding: 8px 0; color: #f1f5f9; font-weight: bold;">${participant.topicTitle || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #94a3b8;"><strong>Attached File:</strong></td>
+                <td style="padding: 8px 0; color: #10b981; font-weight: bold;">${fileName} (${fileSizeStr})</td>
+              </tr>
+              ${
+                githubUrl
+                  ? `<tr>
+                <td style="padding: 8px 0; color: #94a3b8;"><strong>Repository / Demo:</strong></td>
+                <td style="padding: 8px 0;"><a href="${githubUrl}" style="color: #38bdf8;">${githubUrl}</a></td>
+              </tr>`
+                  : ''
+              }
+              ${
+                notes
+                  ? `<tr>
+                <td style="padding: 8px 0; color: #94a3b8;"><strong>Synopsis / Notes:</strong></td>
+                <td style="padding: 8px 0; color: #cbd5e1;">${notes}</td>
+              </tr>`
+                  : ''
+              }
+              <tr>
+                <td style="padding: 8px 0; color: #94a3b8;"><strong>Submitted At:</strong></td>
+                <td style="padding: 8px 0; color: #94a3b8;">${new Date().toLocaleString('en-GB')}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="text-align: center; margin-top: 24px;">
+            <a href="https://aveeranex-hackathon.vercel.app/admin" style="background: #067f92; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">
+              Open Admin Console to Evaluate & Award
+            </a>
+          </div>
+
+          <div style="text-align: center; margin-top: 24px; border-top: 1px solid #1e3a5f; padding-top: 14px; font-size: 11px; color: #64748b;">
+            AVEERANEX (OPC) PRIVATE LIMITED &bull; Research &bull; Technology &bull; Innovation
+          </div>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`[Submission Alert] Sent to ${recipients.join(', ')}`);
+    return true;
+  } catch (err) {
+    console.error('[Submission Alert Error]', err);
+    return false;
+  }
+}
+
+

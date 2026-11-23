@@ -7,9 +7,16 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const caller = await getAuthUserFromRequest(request);
-    if (!caller || caller.role !== 'admin') {
+    if (!caller) {
+      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+    }
+
+    const isSuperAdmin = caller.role === 'super_admin' || caller.email.toLowerCase() === 'info@aveeranex.com';
+    const isAuthorizedAdmin = caller.role === 'admin' && Boolean(caller.canApproveCertificates);
+
+    if (!isSuperAdmin && !isAuthorizedAdmin) {
       return NextResponse.json(
-        { error: 'Forbidden. Super Admin access required.' },
+        { error: 'Forbidden. You do not have certificate management privileges.' },
         { status: 403 }
       );
     }
