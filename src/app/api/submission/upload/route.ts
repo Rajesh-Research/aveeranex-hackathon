@@ -73,6 +73,8 @@ export async function POST(request: NextRequest) {
       ? `${(file.size / (1024 * 1024)).toFixed(2)} MB` 
       : `${(file.size / 1024).toFixed(1)} KB`;
 
+    const round = (formData.get('round') as string) || caller.submissionRound || 'Round 1: Abstract & PPT';
+
     // Update user in DB
     const updated = await updateUser(caller.id, {
       assignedEvent,
@@ -82,6 +84,8 @@ export async function POST(request: NextRequest) {
       submissionFileType: fileExt.slice(1).toUpperCase(),
       submissionGithubUrl: githubUrl,
       submissionNotes: notes,
+      submissionRound: round,
+      submissionStatus: 'PENDING_REVIEW',
       submittedAt: new Date().toISOString(),
       certificateStatus: caller.certificateStatus === 'APPROVED' ? 'APPROVED' : 'PENDING_APPROVAL',
     });

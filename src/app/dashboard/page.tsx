@@ -43,6 +43,7 @@ export default function DashboardPage() {
   // Project Submission states
   const [ongoingEvents, setOngoingEvents] = useState<string[]>(ONGOING_EVENTS);
   const [selectedEvent, setSelectedEvent] = useState(ONGOING_EVENTS[0]);
+  const [selectedRound, setSelectedRound] = useState('Round 1: Abstract & PPT');
   const [submissionFile, setSubmissionFile] = useState<File | null>(null);
   const [githubUrl, setGithubUrl] = useState('');
   const [submissionNotes, setSubmissionNotes] = useState('');
@@ -185,6 +186,7 @@ export default function DashboardPage() {
         formData.append('file', submissionFile);
       }
       formData.append('assignedEvent', selectedEvent);
+      formData.append('round', selectedRound);
       formData.append('githubUrl', githubUrl);
       formData.append('notes', submissionNotes);
 
@@ -702,12 +704,54 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {/* JURY & EVALUATOR FEEDBACK BANNER */}
+          {user.submissionFeedback && (
+            <div className="p-4 rounded-2xl bg-cyan-950/60 border border-cyan-700/80 text-cyan-200 text-xs flex items-start gap-3 shadow-lg">
+              <Sparkles className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <span className="font-bold text-white uppercase tracking-wider font-mono">
+                  Event Evaluator Remarks &amp; Feedback:
+                </span>
+                <p className="text-slate-200">{user.submissionFeedback}</p>
+                {user.submissionStatus && (
+                  <span className="inline-block px-2.5 py-0.5 rounded-full bg-cyan-900 border border-cyan-700 text-cyan-300 text-[10px] font-bold">
+                    Round Evaluation Status: {user.submissionStatus}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* LIVE EVENT STANDINGS & LEADERBOARD STATS */}
+          {(user.leaderboardScore !== undefined || user.leaderboardRank !== undefined) && (
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-950/30 via-slate-900 to-slate-950 border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-400 text-xl font-bold shadow-lg">
+                  🏆
+                </div>
+                <div>
+                  <div className="text-xs font-mono font-bold text-amber-400 uppercase">Live Event Standings</div>
+                  <div className="text-base font-extrabold text-white">
+                    {user.leaderboardRank ? `Rank #${user.leaderboardRank}` : 'Evaluated'} &bull; Total Score: {user.leaderboardScore}/100
+                  </div>
+                  <div className="text-xs text-slate-400">Current Phase: {user.submissionRound || 'Round 1: Abstract & PPT'}</div>
+                </div>
+              </div>
+
+              {user.isFinalist && (
+                <span className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500 text-amber-300 font-extrabold text-xs shadow-md">
+                  ⭐ Grand Finalist
+                </span>
+              )}
+            </div>
+          )}
+
           <form onSubmit={handleProjectSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Event Selector Dropdown */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Select Ongoing Hackathon Event <span className="text-rose-400">*</span>
+                  Select Hackathon Event <span className="text-rose-400">*</span>
                 </label>
                 <select
                   value={selectedEvent}
@@ -720,15 +764,28 @@ export default function DashboardPage() {
                     </option>
                   ))}
                 </select>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Evaluation files will be delivered directly to the hosts of this event.
-                </p>
+              </div>
+
+              {/* Submission Round Selector */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Submission Round <span className="text-rose-400">*</span>
+                </label>
+                <select
+                  value={selectedRound}
+                  onChange={(e) => setSelectedRound(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs outline-none focus:border-aveeranex-cyan"
+                >
+                  <option value="Round 1: Abstract &amp; PPT">Round 1: Abstract &amp; PPT</option>
+                  <option value="Round 2: Prototype &amp; Code">Round 2: Prototype &amp; Code</option>
+                  <option value="Round 3: Grand Finale Pitch">Round 3: Grand Finale Pitch</option>
+                </select>
               </div>
 
               {/* GitHub / Demo URL */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Project GitHub / Live Demo Link <span className="text-slate-500">(Optional)</span>
+                  GitHub / Live Demo Link <span className="text-slate-500">(Optional)</span>
                 </label>
                 <div className="relative">
                   <Github className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
@@ -736,7 +793,7 @@ export default function DashboardPage() {
                     type="url"
                     value={githubUrl}
                     onChange={(e) => setGithubUrl(e.target.value)}
-                    placeholder="https://github.com/your-team/hackathon-project"
+                    placeholder="https://github.com/your-team/project"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs outline-none focus:border-aveeranex-cyan"
                   />
                 </div>

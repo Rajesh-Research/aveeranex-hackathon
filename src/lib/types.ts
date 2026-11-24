@@ -78,6 +78,19 @@ export interface User {
   submissionNotes?: string;
   submittedAt?: string;
 
+  // Submissions review, rounds & leaderboard
+  submissionRound?: string;
+  submissionStatus?: 'PENDING_REVIEW' | 'ROUND_1_APPROVED' | 'ROUND_2_APPROVED' | 'FINALIST' | 'NEEDS_REVISION' | 'REJECTED';
+  submissionFeedback?: string;
+  scoreInnovation?: number;
+  scoreTechnical?: number;
+  scorePresentation?: number;
+  scoreImpact?: number;
+  leaderboardScore?: number;
+  leaderboardRank?: number;
+  isFinalist?: boolean;
+  isLeaderboardPublished?: boolean;
+
   // Certificate details
   certificateStatus: CertificateStatus;
   certificateId?: string;
@@ -149,6 +162,19 @@ export interface PublicParticipantInfo {
   submissionGithubUrl?: string;
   submissionNotes?: string;
   submittedAt?: string;
+
+  // Submissions review, rounds & leaderboard
+  submissionRound?: string;
+  submissionStatus?: 'PENDING_REVIEW' | 'ROUND_1_APPROVED' | 'ROUND_2_APPROVED' | 'FINALIST' | 'NEEDS_REVISION' | 'REJECTED';
+  submissionFeedback?: string;
+  scoreInnovation?: number;
+  scoreTechnical?: number;
+  scorePresentation?: number;
+  scoreImpact?: number;
+  leaderboardScore?: number;
+  leaderboardRank?: number;
+  isFinalist?: boolean;
+  isLeaderboardPublished?: boolean;
 
   certificateStatus: CertificateStatus;
   certificateId?: string;
