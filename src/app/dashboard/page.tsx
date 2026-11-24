@@ -649,8 +649,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* EVENT SUB-PLATFORM WORKSPACE (Certificate Designer, Onboarding & Approvals) */}
-      {(category === 'EVENT_COORDINATOR' || category === 'ADMIN') && (
+      {/* EVENT SUB-PLATFORM WORKSPACE (Certificate Designer, Onboarding, Submissions & Jury Evaluations) */}
+      {(category === 'EVENT_COORDINATOR' || category === 'ADMIN' || category === 'MENTOR_JURY' || category === 'TECHNICAL_COORDINATOR') && (
         <EventSubplatformWorkspace
           hostUser={activeUser}
           onTemplateSaved={(u) => setUser(u)}

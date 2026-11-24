@@ -27,8 +27,12 @@ export async function GET(request: NextRequest) {
       caller.role === 'admin' ||
       caller.role === 'super_admin';
 
-    if (!isHostOrCoord) {
-      return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
+    const isEvaluator =
+      caller.category === 'MENTOR_JURY' ||
+      caller.category === 'TECHNICAL_COORDINATOR';
+
+    if (!isHostOrCoord && !isEvaluator) {
+      return NextResponse.json({ error: 'Forbidden. Authorized evaluation or host privileges required.' }, { status: 403 });
     }
 
     const eventScope = (caller.assignedEvent || caller.presentedOn || '').trim().toLowerCase();
@@ -92,12 +96,27 @@ export async function POST(request: NextRequest) {
       caller.role === 'admin' ||
       caller.role === 'super_admin';
 
-    if (!isHostOrCoord) {
-      return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
+    const isEvaluator =
+      caller.category === 'MENTOR_JURY' ||
+      caller.category === 'TECHNICAL_COORDINATOR';
+
+    if (!isHostOrCoord && !isEvaluator) {
+      return NextResponse.json({ error: 'Forbidden. Authorized evaluation or host privileges required.' }, { status: 403 });
     }
 
     const body = await request.json();
     const { action } = body;
+
+    // Evaluators (Jury & Technical Coordinators) can review submissions and score participants
+    if (isEvaluator && !isHostOrCoord) {
+      if (action !== 'REVIEW_SUBMISSION' && action !== 'SCORE_PARTICIPANT') {
+        return NextResponse.json(
+          { error: 'Forbidden. Jury & Technical Coordinators are authorized to evaluate submissions and score participants.' },
+          { status: 403 }
+        );
+      }
+    }
+
     const hostEventName = caller.assignedEvent || caller.presentedOn || "AVEERANEX INNOVATE - NOV'26";
 
     // 1. UPDATE EVENT CONFIGURATION

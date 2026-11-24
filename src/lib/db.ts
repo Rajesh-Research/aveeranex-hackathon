@@ -325,7 +325,6 @@ export async function initDatabase(): Promise<void> {
                'AVEERANEX INNOVATE ONLINE HACKATHON  Nov''26', $3, 'super_admin', 'ADMIN', true, 'APPROVED',
                $4, NOW(), 'SUPER_ADMIN', NOW()
              ) ON CONFLICT (email) DO UPDATE SET
-                password_hash = $3,
                 role = 'super_admin',
                 category = 'ADMIN',
                 can_approve_certificates = true`,

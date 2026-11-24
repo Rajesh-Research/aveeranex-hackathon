@@ -49,6 +49,8 @@ export default function EventSubplatformWorkspace({
     'LEADERBOARD' | 'SUBMISSIONS' | 'ONBOARD' | 'CERTIFICATES' | 'EVENT_INFO'
   >('LEADERBOARD');
 
+  const isEvaluator = hostUser.category === 'MENTOR_JURY' || hostUser.category === 'TECHNICAL_COORDINATOR';
+
   const [eventUsers, setEventUsers] = useState<PublicParticipantInfo[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
@@ -525,7 +527,7 @@ export default function EventSubplatformWorkspace({
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-700 text-cyan-300 text-xs font-mono font-bold uppercase">
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            AVEERANEX EVENT HOST &amp; COORDINATION PORTAL
+            {isEvaluator ? 'AVEERANEX JURY & EVALUATOR PORTAL' : 'AVEERANEX EVENT HOST & COORDINATION PORTAL'}
           </div>
           <h2 className="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
             <span>{eventTitle}</span>
@@ -566,41 +568,45 @@ export default function EventSubplatformWorkspace({
             <span>PPT Submissions &amp; Rounds</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('ONBOARD')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-              activeTab === 'ONBOARD'
-                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg'
-                : 'bg-slate-900 text-slate-300 border border-slate-800 hover:text-white'
-            }`}
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Onboard ({allParticipants.length})</span>
-          </button>
+          {!isEvaluator && (
+            <>
+              <button
+                onClick={() => setActiveTab('ONBOARD')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                  activeTab === 'ONBOARD'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg'
+                    : 'bg-slate-900 text-slate-300 border border-slate-800 hover:text-white'
+                }`}
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Onboard ({allParticipants.length})</span>
+              </button>
 
-          <button
-            onClick={() => setActiveTab('CERTIFICATES')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-              activeTab === 'CERTIFICATES'
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                : 'bg-slate-900 text-slate-300 border border-slate-800 hover:text-white'
-            }`}
-          >
-            <Palette className="w-4 h-4" />
-            <span>Certificate Studio</span>
-          </button>
+              <button
+                onClick={() => setActiveTab('CERTIFICATES')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                  activeTab === 'CERTIFICATES'
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                    : 'bg-slate-900 text-slate-300 border border-slate-800 hover:text-white'
+                }`}
+              >
+                <Palette className="w-4 h-4" />
+                <span>Certificate Studio</span>
+              </button>
 
-          <button
-            onClick={() => setActiveTab('EVENT_INFO')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-              activeTab === 'EVENT_INFO'
-                ? 'bg-slate-800 text-white border border-slate-700'
-                : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            <span>Event Space Setup</span>
-          </button>
+              <button
+                onClick={() => setActiveTab('EVENT_INFO')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                  activeTab === 'EVENT_INFO'
+                    ? 'bg-slate-800 text-white border border-slate-700'
+                    : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
+                }`}
+              >
+                <Settings className="w-4 h-4" />
+                <span>Event Space Setup</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -631,25 +637,34 @@ export default function EventSubplatformWorkspace({
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                onClick={handleToggleLeaderboard}
-                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-                  isLeaderboardPublished
-                    ? 'bg-emerald-500/20 border border-emerald-500 text-emerald-300'
-                    : 'bg-amber-500 text-slate-950 shadow-md font-extrabold hover:bg-amber-400'
-                }`}
-              >
-                <Trophy className="w-4 h-4" />
-                <span>{isLeaderboardPublished ? '✓ Leaderboard Published (Live)' : 'Publish Leaderboard to Participants'}</span>
-              </button>
+              {!isEvaluator ? (
+                <>
+                  <button
+                    onClick={handleToggleLeaderboard}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                      isLeaderboardPublished
+                        ? 'bg-emerald-500/20 border border-emerald-500 text-emerald-300'
+                        : 'bg-amber-500 text-slate-950 shadow-md font-extrabold hover:bg-amber-400'
+                    }`}
+                  >
+                    <Trophy className="w-4 h-4" />
+                    <span>{isLeaderboardPublished ? '✓ Leaderboard Published (Live)' : 'Publish Leaderboard to Participants'}</span>
+                  </button>
 
-              <button
-                onClick={handleBulkApprove}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white shadow flex items-center gap-1.5"
-              >
-                <Award className="w-4 h-4" />
-                <span>Bulk Issue Certificates</span>
-              </button>
+                  <button
+                    onClick={handleBulkApprove}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white shadow flex items-center gap-1.5"
+                  >
+                    <Award className="w-4 h-4" />
+                    <span>Bulk Issue Certificates</span>
+                  </button>
+                </>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300">
+                  <span className={`w-2 h-2 rounded-full ${isLeaderboardPublished ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                  <span>{isLeaderboardPublished ? 'Leaderboard Live for Participants' : 'Draft Mode (Scoring in progress)'}</span>
+                </div>
+              )}
             </div>
           </div>
 

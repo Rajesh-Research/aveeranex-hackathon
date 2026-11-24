@@ -32,6 +32,7 @@ import {
   Trophy,
   Medal,
   ChevronDown,
+  ArrowRight,
 } from 'lucide-react';
 import { PublicParticipantInfo, AwardLevel } from '@/lib/types';
 
@@ -539,6 +540,29 @@ export default function AdminPage() {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Event Hosting Platform Quick Launch Banner */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-cyan-950/60 via-purple-950/40 to-slate-900 border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono text-[10px] font-bold uppercase">
+            <Sparkles className="w-3 h-3" />
+            Event Space &amp; Leaderboard Command Center
+          </div>
+          <h3 className="text-sm sm:text-base font-bold text-white">
+            Manage Event Submissions, PPT Rounds &amp; Certificate Studio
+          </h3>
+          <p className="text-xs text-slate-400">
+            Switch to your dedicated Event Space to onboard participants, advance PPT submission rounds, score teams, and issue verified certificates.
+          </p>
+        </div>
+        <Link
+          href="/dashboard"
+          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-aveeranex-teal to-aveeranex-cyan text-slate-950 font-extrabold text-xs hover:brightness-110 shadow-lg shadow-cyan-950/40 flex items-center justify-center gap-2 whitespace-nowrap transition-all"
+        >
+          <span>Open Event Space Workspace</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
       </div>
 
       {/* Super Admin Quick Stakeholder Dashboard Previews */}
