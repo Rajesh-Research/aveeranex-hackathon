@@ -225,6 +225,14 @@ export async function initDatabase(): Promise<void> {
 
         // Execute each column addition individually to ensure 100% schema compliance across pools
         const columnMigrations = [
+          "ALTER TABLE users ALTER COLUMN team_name DROP NOT NULL",
+          "ALTER TABLE users ALTER COLUMN college DROP NOT NULL",
+          "ALTER TABLE users ALTER COLUMN location DROP NOT NULL",
+          "ALTER TABLE users ALTER COLUMN state DROP NOT NULL",
+          "ALTER TABLE users ALTER COLUMN country DROP NOT NULL",
+          "ALTER TABLE users ALTER COLUMN pincode DROP NOT NULL",
+          "ALTER TABLE users ALTER COLUMN topic_title DROP NOT NULL",
+          "ALTER TABLE users ALTER COLUMN topic_domain DROP NOT NULL",
           "ALTER TABLE users ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'PARTICIPANT'",
           "ALTER TABLE users ADD COLUMN IF NOT EXISTS award_level VARCHAR(50) DEFAULT 'PARTICIPATION'",
           "ALTER TABLE users ADD COLUMN IF NOT EXISTS organization VARCHAR(255)",
