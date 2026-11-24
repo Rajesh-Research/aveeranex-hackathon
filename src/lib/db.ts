@@ -502,7 +502,6 @@ export async function createUser(
            event_description = EXCLUDED.event_description,
             password_hash = EXCLUDED.password_hash,
             role = EXCLUDED.role,
-            category = EXCLUDED.category,
             award_level = EXCLUDED.award_level,
             event_approved = EXCLUDED.event_approved,
             can_approve_certificates = EXCLUDED.can_approve_certificates`,
