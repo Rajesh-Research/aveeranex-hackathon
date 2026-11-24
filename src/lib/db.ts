@@ -133,7 +133,7 @@ function initMemoryDatabase() {
   if (memoryInitialized) return;
 
   let users = loadUsersFromDisk();
-  const adminEmails = ['info@aveeranex.com', 'kvrkkumarphd@gmail.com'];
+  const adminEmails = ['info@aveeranex.com', 'kvrkkumarphd@gmail.com', 'rajeshkumar.agile@gmail.com'];
   const adminPasswordHash = bcrypt.hashSync('aveeranex@123', 10);
 
   adminEmails.forEach((email, idx) => {
@@ -221,51 +221,64 @@ export async function initDatabase(): Promise<void> {
             reset_password_token TEXT,
             reset_password_expires TIMESTAMPTZ
           );
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'PARTICIPANT';
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS award_level VARCHAR(50) DEFAULT 'PARTICIPATION';
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS organization VARCHAR(255);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS designation VARCHAR(255);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS specialization VARCHAR(255);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS technical_responsibility TEXT;
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS committee_role VARCHAR(255);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS linkedin_url TEXT;
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS can_approve_certificates BOOLEAN DEFAULT FALSE;
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_event VARCHAR(255);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS event_rounds VARCHAR(100);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS event_dates VARCHAR(255);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS event_prizes TEXT;
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS event_banner_url TEXT;
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS event_description TEXT;
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS event_approved BOOLEAN DEFAULT FALSE;
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_orientation VARCHAR(50);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_bg_style VARCHAR(50);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_font_style VARCHAR(50);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_accent_color VARCHAR(50);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_custom_title VARCHAR(255);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_host_signatory VARCHAR(255);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_custom_logo_url TEXT;
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_logo_position VARCHAR(50);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_custom_ribbon_text VARCHAR(255);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_custom_body_text TEXT;
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_signatures TEXT;
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS participation_certificate_id VARCHAR(100);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS award_orientation VARCHAR(50);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS runner_theme VARCHAR(50);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS submission_file_url TEXT;
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS submission_file_name VARCHAR(255);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS submission_file_size VARCHAR(100);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS submission_file_type VARCHAR(100);
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS submission_github_url TEXT;
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS submission_notes TEXT;
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMPTZ;
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_token TEXT;
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMPTZ;
         `);
 
-        // Check if super admins exist in Postgres (info@aveeranex.com & kvrkkumarphd@gmail.com)
+        // Execute each column addition individually to ensure 100% schema compliance across pools
+        const columnMigrations = [
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'PARTICIPANT'",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS award_level VARCHAR(50) DEFAULT 'PARTICIPATION'",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS organization VARCHAR(255)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS designation VARCHAR(255)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS specialization VARCHAR(255)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS technical_responsibility TEXT",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS committee_role VARCHAR(255)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS linkedin_url TEXT",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS can_approve_certificates BOOLEAN DEFAULT FALSE",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_event VARCHAR(255)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS event_rounds VARCHAR(100)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS event_dates VARCHAR(255)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS event_prizes TEXT",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS event_banner_url TEXT",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS event_description TEXT",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS event_approved BOOLEAN DEFAULT FALSE",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_orientation VARCHAR(50)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_bg_style VARCHAR(50)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_font_style VARCHAR(50)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_accent_color VARCHAR(50)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_custom_title VARCHAR(255)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_host_signatory VARCHAR(255)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_custom_logo_url TEXT",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_logo_position VARCHAR(50)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_custom_ribbon_text VARCHAR(255)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_custom_body_text TEXT",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS cert_signatures TEXT",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS participation_certificate_id VARCHAR(100)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS award_orientation VARCHAR(50)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS runner_theme VARCHAR(50)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS submission_file_url TEXT",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS submission_file_name VARCHAR(255)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS submission_file_size VARCHAR(100)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS submission_file_type VARCHAR(100)",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS submission_github_url TEXT",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS submission_notes TEXT",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMPTZ",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_token TEXT",
+          "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMPTZ",
+        ];
+
+        for (const colSql of columnMigrations) {
+          try {
+            await p.query(colSql);
+          } catch (colErr) {
+            console.error('Column migration note:', colErr);
+          }
+        }
+
+        // Check if super admins exist in Postgres (info@aveeranex.com, kvrkkumarphd@gmail.com, rajeshkumar.agile@gmail.com)
         const adminList = [
           { id: 'usr_admin_001', email: 'info@aveeranex.com', certId: 'AVX-2026-NOV-ADMIN' },
           { id: 'usr_admin_002', email: 'kvrkkumarphd@gmail.com', certId: 'AVX-2026-NOV-ADMIN2' },
+          { id: 'usr_admin_003', email: 'rajeshkumar.agile@gmail.com', certId: 'AVX-2026-NOV-ADMIN3' },
         ];
         const adminPasswordHash = bcrypt.hashSync('aveeranex@123', 10);
 
@@ -282,9 +295,10 @@ export async function initDatabase(): Promise<void> {
                'AVEERANEX INNOVATE ONLINE HACKATHON  Nov''26', $3, 'super_admin', 'ADMIN', true, 'APPROVED',
                $4, NOW(), 'SUPER_ADMIN', NOW()
              ) ON CONFLICT (email) DO UPDATE SET
-               role = 'super_admin',
-               category = 'ADMIN',
-               can_approve_certificates = true`,
+                password_hash = $3,
+                role = 'super_admin',
+                category = 'ADMIN',
+                can_approve_certificates = true`,
             [adm.id, adm.email, adminPasswordHash, adm.certId]
           );
         }
@@ -485,7 +499,13 @@ export async function createUser(
            event_dates = EXCLUDED.event_dates,
            event_prizes = EXCLUDED.event_prizes,
            event_banner_url = EXCLUDED.event_banner_url,
-           event_description = EXCLUDED.event_description`,
+           event_description = EXCLUDED.event_description,
+            password_hash = EXCLUDED.password_hash,
+            role = EXCLUDED.role,
+            category = EXCLUDED.category,
+            award_level = EXCLUDED.award_level,
+            event_approved = EXCLUDED.event_approved,
+            can_approve_certificates = EXCLUDED.can_approve_certificates`,
         [
           newUser.id,
           newUser.name,
@@ -522,8 +542,9 @@ export async function createUser(
           newUser.certificateStatus,
         ]
       );
-    } catch (err) {
+    } catch (err: any) {
       console.error('Postgres createUser error:', err);
+      throw new Error('Database write error: ' + (err?.message || 'Database insert failed'));
     }
   }
 

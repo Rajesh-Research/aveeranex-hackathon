@@ -184,8 +184,8 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Signup error:', error);
     return NextResponse.json(
-      { error: 'An error occurred during registration. Please try again.' },
-      { status: 500 }
+      { error: error?.message || 'An error occurred during registration. Please try again.' },
+      { status: 400 }
     );
   }
 }
