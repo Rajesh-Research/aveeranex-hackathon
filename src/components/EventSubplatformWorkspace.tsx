@@ -27,6 +27,13 @@ import {
   Send,
   AlertCircle,
   FileSpreadsheet,
+  Plus,
+  Trash2,
+  Image as ImageIcon,
+  RotateCcw,
+  SlidersHorizontal,
+  Move,
+  Layers,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { PublicParticipantInfo, UserCategory, AwardLevel } from '@/lib/types';
@@ -73,45 +80,97 @@ export default function EventSubplatformWorkspace({
   );
   const [savingEvent, setSavingEvent] = useState(false);
 
-  // Template Studio State
+  // Extended Template Studio State (Clean Draft Default)
+  let savedConfig: any = {};
+  if (hostUser.certSignatures) {
+    try {
+      const parsed = JSON.parse(hostUser.certSignatures);
+      if (Array.isArray(parsed)) {
+        savedConfig = { signatures: parsed };
+      } else if (typeof parsed === 'object' && parsed !== null) {
+        savedConfig = parsed;
+      }
+    } catch {}
+  }
+
   const [orientation, setOrientation] = useState<'landscape' | 'portrait'>(
-    hostUser.certOrientation || 'landscape'
+    hostUser.certOrientation || savedConfig.orientation || 'landscape'
   );
-  const [bgStyle, setBgStyle] = useState<'classic' | 'gold' | 'dark' | 'white'>(
-    hostUser.certBgStyle || 'classic'
+  const [bgStyle, setBgStyle] = useState<'classic' | 'gold' | 'silver' | 'bronze' | 'dark' | 'white' | 'custom'>(
+    (hostUser.certBgStyle as any) || savedConfig.bgStyle || 'classic'
+  );
+  const [customBgColor, setCustomBgColor] = useState<string>(
+    savedConfig.customBgColor || '#FFFFFF'
   );
   const [fontStyle, setFontStyle] = useState<'royal' | 'modern' | 'classic'>(
-    hostUser.certFontStyle || 'modern'
+    hostUser.certFontStyle || savedConfig.fontStyle || 'modern'
   );
-  const [accentColor, setAccentColor] = useState(hostUser.certAccentColor || '#067F92');
+  const [accentColor, setAccentColor] = useState(
+    hostUser.certAccentColor || savedConfig.accentColor || '#067F92'
+  );
+  const [titleColor, setTitleColor] = useState<string>(
+    savedConfig.titleColor || ''
+  );
+  const [bodyTextColor, setBodyTextColor] = useState<string>(
+    savedConfig.bodyTextColor || ''
+  );
   const [customTitle, setCustomTitle] = useState(
-    hostUser.certCustomTitle || 'CERTIFICATE OF ACHIEVEMENT'
+    hostUser.certCustomTitle || savedConfig.customTitle || 'CERTIFICATE OF ACHIEVEMENT'
   );
   const [hostSignatory, setHostSignatory] = useState(
-    hostUser.certHostSignatory || hostUser.name
+    hostUser.certHostSignatory || savedConfig.hostSignatory || ''
   );
-  const [customLogoUrl, setCustomLogoUrl] = useState<string>(hostUser.certCustomLogoUrl || '');
-  const [logoPosition, setLogoPosition] = useState<'left' | 'center' | 'right'>(
-    hostUser.certLogoPosition || 'center'
+  const [customRibbonText, setCustomRibbonText] = useState(
+    hostUser.certCustomRibbonText || savedConfig.customRibbonText || ''
   );
-  const [customRibbonText, setCustomRibbonText] = useState(hostUser.certCustomRibbonText || '');
-  const [customBodyText, setCustomBodyText] = useState(hostUser.certCustomBodyText || '');
+  const [customBodyText, setCustomBodyText] = useState(
+    hostUser.certCustomBodyText || savedConfig.customBodyText || ''
+  );
+  const [customFooterText, setCustomFooterText] = useState(
+    savedConfig.customFooterText || ''
+  );
+  const [textOffsetY, setTextOffsetY] = useState<number>(
+    savedConfig.textOffsetY || 0
+  );
+
+  // Primary Logo State (Clean Draft: Empty by default)
+  const [customLogoUrl, setCustomLogoUrl] = useState<string>(
+    hostUser.certCustomLogoUrl || savedConfig.customLogoUrl || ''
+  );
+  const [logoPosition, setLogoPosition] = useState<'top-left' | 'top-center' | 'top-right' | 'left' | 'center' | 'right'>(
+    (hostUser.certLogoPosition as any) || savedConfig.logoPosition || 'top-center'
+  );
+  const [logoXOffset, setLogoXOffset] = useState<number>(
+    savedConfig.logoXOffset || 0
+  );
+  const [logoYOffset, setLogoYOffset] = useState<number>(
+    savedConfig.logoYOffset || 0
+  );
+  const [logoScale, setLogoScale] = useState<number>(
+    savedConfig.logoScale || 1.0
+  );
+
+  // Secondary Logo State (Sponsors / Partners)
+  const [secondaryLogoUrl, setSecondaryLogoUrl] = useState<string>(
+    savedConfig.secondaryLogoUrl || ''
+  );
+  const [secondaryLogoPosition, setSecondaryLogoPosition] = useState<'top-left' | 'top-center' | 'top-right' | 'left' | 'center' | 'right'>(
+    savedConfig.secondaryLogoPosition || 'top-right'
+  );
+  const [secondaryLogoScale, setSecondaryLogoScale] = useState<number>(
+    savedConfig.secondaryLogoScale || 1.0
+  );
+
+  // Clean Draft Signatures: Default to empty array! No pre-set director names!
   const [signatures, setSignatures] = useState<CertificateSignatureItem[]>(() => {
-    if (hostUser.certSignatures) {
-      try {
-        return JSON.parse(hostUser.certSignatures);
-      } catch {}
+    if (savedConfig.signatures && Array.isArray(savedConfig.signatures)) {
+      return savedConfig.signatures;
     }
-    return [
-      {
-        name: hostUser.name,
-        title: hostUser.designation || 'Event Host',
-        imageUrl: '/assets/signature.png',
-        position: 'left',
-      },
-    ];
+    return []; // Clean empty draft by default!
   });
   const [savingTemplate, setSavingTemplate] = useState(false);
+  const [studioSubTab, setStudioSubTab] = useState<'THEME' | 'LOGOS' | 'SIGNATURES' | 'TEXTS'>('THEME');
+  const [previewAward, setPreviewAward] = useState<AwardLevel>('WINNER_1ST');
 
   // Scoring & Evaluation Modal State
   const [scoringUser, setScoringUser] = useState<PublicParticipantInfo | null>(null);
@@ -432,11 +491,121 @@ export default function EventSubplatformWorkspace({
     }
   };
 
+  // Helpers for Studio Image Resizing & Signatories
+  const compressImageToDataUrl = (file: File, maxDim: number = 800): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        if (!dataUrl) return resolve('');
+        const img = new window.Image();
+        img.onload = () => {
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/png'));
+          } else {
+            resolve(dataUrl);
+          }
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      };
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleAddSignatory = () => {
+    if (signatures.length >= 3) {
+      alert('You can add up to 3 authorized signatories.');
+      return;
+    }
+    const nextPos: 'left' | 'center' | 'right' =
+      signatures.length === 0 ? 'left' : signatures.length === 1 ? 'right' : 'center';
+    setSignatures([
+      ...signatures,
+      {
+        name: hostUser.name || 'Authorized Signatory',
+        title: hostUser.designation || 'Director / Dean',
+        position: nextPos,
+        imageUrl: '',
+      },
+    ]);
+  };
+
+  const handleUpdateSignatory = (index: number, updates: Partial<CertificateSignatureItem>) => {
+    setSignatures((prev) =>
+      prev.map((s, idx) => (idx === index ? { ...s, ...updates } : s))
+    );
+  };
+
+  const handleRemoveSignatory = (index: number) => {
+    setSignatures((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleResetToCleanDraft = () => {
+    if (!confirm('Reset template to clean draft? All custom logos, signatures, and custom styling will be cleared.')) return;
+    setOrientation('landscape');
+    setBgStyle('classic');
+    setCustomBgColor('#FFFFFF');
+    setFontStyle('modern');
+    setAccentColor('#067F92');
+    setTitleColor('');
+    setBodyTextColor('');
+    setCustomTitle('CERTIFICATE OF ACHIEVEMENT');
+    setHostSignatory('');
+    setCustomRibbonText('');
+    setCustomBodyText('');
+    setCustomFooterText('');
+    setTextOffsetY(0);
+    setCustomLogoUrl('');
+    setLogoPosition('top-center');
+    setLogoXOffset(0);
+    setLogoYOffset(0);
+    setLogoScale(1.0);
+    setSecondaryLogoUrl('');
+    setSecondaryLogoPosition('top-right');
+    setSecondaryLogoScale(1.0);
+    setSignatures([]);
+    setStatusMsg('Template reset to clean empty draft.');
+  };
+
   // Save Certificate Template Design
   const handleSaveTemplate = async () => {
     setSavingTemplate(true);
     setStatusMsg(null);
     try {
+      const extendedPayload = {
+        signatures,
+        secondaryLogoUrl,
+        secondaryLogoPosition,
+        secondaryLogoScale,
+        logoXOffset,
+        logoYOffset,
+        logoScale,
+        titleColor,
+        bodyTextColor,
+        customBgColor,
+        customFooterText,
+        textOffsetY,
+        isCleanDraft: true,
+      };
+
       const res = await fetch('/api/event/template', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -451,26 +620,18 @@ export default function EventSubplatformWorkspace({
           certLogoPosition: logoPosition,
           certCustomRibbonText: customRibbonText,
           certCustomBodyText: customBodyText,
-          certSignatures: JSON.stringify(signatures),
+          certSignatures: JSON.stringify(extendedPayload),
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save template.');
-      setStatusMsg('Certificate template design saved for your event!');
+      setStatusMsg('Certificate template design saved successfully for your event!');
       if (onTemplateSaved && data.user) onTemplateSaved(data.user);
     } catch (err: any) {
       setStatusMsg(err.message);
     } finally {
       setSavingTemplate(false);
     }
-  };
-
-  const readFileAsDataUrl = (file: File, cb: (url: string) => void) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') cb(reader.result);
-    };
-    reader.readAsDataURL(file);
   };
 
   const templateConfig: CertificateTemplateConfig = {
@@ -482,9 +643,21 @@ export default function EventSubplatformWorkspace({
     hostSignatory,
     customLogoUrl: customLogoUrl || undefined,
     logoPosition,
+    logoXOffset,
+    logoYOffset,
+    logoScale,
+    secondaryLogoUrl: secondaryLogoUrl || undefined,
+    secondaryLogoPosition,
+    secondaryLogoScale,
     customRibbonText: customRibbonText || undefined,
     customBodyText: customBodyText || undefined,
+    customFooterText: customFooterText || undefined,
+    titleColor: titleColor || undefined,
+    bodyTextColor: bodyTextColor || undefined,
+    customBgColor: customBgColor || undefined,
+    textOffsetY,
     signatures,
+    isCleanDraft: true,
   };
 
   // Filtered participants & submissions
@@ -1249,133 +1422,685 @@ export default function EventSubplatformWorkspace({
       )}
 
       {/* ======================================================== */}
-      {/* TAB 4: CERTIFICATE STUDIO & DESIGNER                     */}
-      {/* ======================================================== */}
-      {activeTab === 'CERTIFICATES' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Controls Panel */}
-          <div className="lg:col-span-4 space-y-4 p-5 rounded-2xl bg-slate-900/70 border border-slate-800">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
-              <Palette className="w-4 h-4 text-purple-400" />
-              <span>Event Certificate Studio</span>
-            </h3>
-
-            {/* Orientation */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Certificate Layout Orientation
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOrientation('landscape')}
-                  className={`p-2 rounded-xl text-xs font-bold border transition-all ${
-                    orientation === 'landscape'
-                      ? 'bg-purple-600/30 border-purple-400 text-white'
-                      : 'bg-slate-950 border-slate-800 text-slate-400'
-                  }`}
-                >
-                  Landscape (Horizontal)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOrientation('portrait')}
-                  className={`p-2 rounded-xl text-xs font-bold border transition-all ${
-                    orientation === 'portrait'
-                      ? 'bg-purple-600/30 border-purple-400 text-white'
-                      : 'bg-slate-950 border-slate-800 text-slate-400'
-                  }`}
-                >
-                  Portrait (Vertical)
-                </button>
+        {/* TAB 4: CERTIFICATE STUDIO & DESIGNER (CLEAN DRAFT)       */}
+        {/* ======================================================== */}
+        {activeTab === 'CERTIFICATES' && (
+          <div className="space-y-5">
+            {/* Clean Draft Instruction Banner */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/70 via-slate-900 to-indigo-950/70 border border-purple-500/30 text-xs text-slate-300 space-y-1.5 shadow-xl">
+              <div className="flex items-center gap-2 text-purple-300 font-bold font-mono uppercase tracking-wide">
+                <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
+                <span>Clean Draft Mode Active &bull; Host &amp; Admin Customization Studio</span>
               </div>
+              <p className="text-slate-300 leading-relaxed text-[11px]">
+                This certificate begins as a <strong>neat and clean empty draft</strong> without pre-printed logos or hardcoded director signatures. You have complete flexibility to upload your institution/sponsor logos, move them anywhere, configure authorized signatories (Directors, Deans, HODs, Conveners) with transparent signatures, add custom free texts with vertical spacing control, and choose background and font color schemes. All event certificates maintain official platform attribution <span className="text-cyan-300 font-semibold font-mono">&quot;Powered by AVEERANEX (OPC) PRIVATE LIMITED&quot;</span> at the bottom.
+              </p>
             </div>
 
-            {/* Background Style */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Background Theme
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {(['classic', 'gold', 'dark', 'white'] as const).map((bg) => (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Studio Controls Sidebar (5 cols) */}
+              <div className="lg:col-span-5 space-y-4 p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
+                    <Palette className="w-4 h-4 text-purple-400" />
+                    <span>Template Studio Controls</span>
+                  </h3>
                   <button
-                    key={bg}
                     type="button"
-                    onClick={() => setBgStyle(bg)}
-                    className={`p-2 rounded-xl text-xs font-bold capitalize border transition-all ${
-                      bgStyle === bg
-                        ? 'bg-purple-600/30 border-purple-400 text-white'
-                        : 'bg-slate-950 border-slate-800 text-slate-400'
+                    onClick={handleResetToCleanDraft}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-slate-700 hover:border-rose-700/50 text-[10px] font-bold transition-all"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Reset Draft</span>
+                  </button>
+                </div>
+
+                {/* Sub-tab Navigation */}
+                <div className="grid grid-cols-4 gap-1 p-1 bg-slate-950 rounded-xl border border-slate-800 text-[11px] font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setStudioSubTab('THEME')}
+                    className={`py-1.5 rounded-lg transition-all ${
+                      studioSubTab === 'THEME'
+                        ? 'bg-purple-600 text-white shadow'
+                        : 'text-slate-400 hover:text-white'
                     }`}
                   >
-                    {bg} Theme
+                    Theme
                   </button>
-                ))}
+                  <button
+                    type="button"
+                    onClick={() => setStudioSubTab('LOGOS')}
+                    className={`py-1.5 rounded-lg transition-all ${
+                      studioSubTab === 'LOGOS'
+                        ? 'bg-purple-600 text-white shadow'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Logos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStudioSubTab('SIGNATURES')}
+                    className={`py-1.5 rounded-lg transition-all ${
+                      studioSubTab === 'SIGNATURES'
+                        ? 'bg-purple-600 text-white shadow'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Signatures
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStudioSubTab('TEXTS')}
+                    className={`py-1.5 rounded-lg transition-all ${
+                      studioSubTab === 'TEXTS'
+                        ? 'bg-purple-600 text-white shadow'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Texts
+                  </button>
+                </div>
+
+                {/* SUBTAB 1: THEME & COLORS */}
+                {studioSubTab === 'THEME' && (
+                  <div className="space-y-4 animate-in fade-in duration-150">
+                    {/* Orientation */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                        Certificate Orientation
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setOrientation('landscape')}
+                          className={`p-2.5 rounded-xl text-xs font-bold border transition-all ${
+                            orientation === 'landscape'
+                              ? 'bg-purple-600/30 border-purple-400 text-white shadow'
+                              : 'bg-slate-950 border-slate-800 text-slate-400'
+                          }`}
+                        >
+                          Landscape (Horizontal)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setOrientation('portrait')}
+                          className={`p-2.5 rounded-xl text-xs font-bold border transition-all ${
+                            orientation === 'portrait'
+                              ? 'bg-purple-600/30 border-purple-400 text-white shadow'
+                              : 'bg-slate-950 border-slate-800 text-slate-400'
+                          }`}
+                        >
+                          Portrait (Vertical)
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Background Theme */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                        Background Canvas Theme
+                      </label>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {(['classic', 'gold', 'silver', 'bronze', 'dark', 'white'] as const).map((bg) => (
+                          <button
+                            key={bg}
+                            type="button"
+                            onClick={() => setBgStyle(bg)}
+                            className={`p-2 rounded-xl text-xs font-bold capitalize border transition-all ${
+                              bgStyle === bg
+                                ? 'bg-purple-600/30 border-purple-400 text-white shadow'
+                                : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            {bg}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Custom Background Color Picker */}
+                    <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-300">Custom Background Color</span>
+                        <input
+                          type="color"
+                          value={customBgColor || '#FFFFFF'}
+                          onChange={(e) => setCustomBgColor(e.target.value)}
+                          className="w-7 h-7 rounded border border-slate-700 bg-transparent cursor-pointer"
+                        />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {['#FFFFFF', '#0F172A', '#F8FAFC', '#1E1B4B', '#022C22', '#18181B'].map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => setCustomBgColor(c)}
+                            style={{ backgroundColor: c }}
+                            className="w-5 h-5 rounded-full border border-slate-600 hover:scale-110 transition-transform"
+                            title={c}
+                          />
+                        ))}
+                        {customBgColor && (
+                          <button
+                            type="button"
+                            onClick={() => setCustomBgColor('')}
+                            className="text-[10px] text-slate-500 hover:text-slate-300 ml-auto"
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Typography Font Colors */}
+                    <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+                      <span className="text-xs font-semibold text-slate-300 block">Typography Font Colors</span>
+                      
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">Title Font Color</span>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={titleColor || (bgStyle === 'dark' ? '#FFFFFF' : '#0F172A')}
+                            onChange={(e) => setTitleColor(e.target.value)}
+                            className="w-6 h-6 rounded border border-slate-700 bg-transparent cursor-pointer"
+                          />
+                          {titleColor && (
+                            <button
+                              type="button"
+                              onClick={() => setTitleColor('')}
+                              className="text-[10px] text-slate-500 hover:text-slate-300"
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">Body Text Font Color</span>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={bodyTextColor || (bgStyle === 'dark' ? '#CBD5E1' : '#334155')}
+                            onChange={(e) => setBodyTextColor(e.target.value)}
+                            className="w-6 h-6 rounded border border-slate-700 bg-transparent cursor-pointer"
+                          />
+                          {bodyTextColor && (
+                            <button
+                              type="button"
+                              onClick={() => setBodyTextColor('')}
+                              className="text-[10px] text-slate-500 hover:text-slate-300"
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">Accent / Ribbon Color</span>
+                        <input
+                          type="color"
+                          value={accentColor}
+                          onChange={(e) => setAccentColor(e.target.value)}
+                          className="w-6 h-6 rounded border border-slate-700 bg-transparent cursor-pointer"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* SUBTAB 2: LOGO MANAGEMENT & POSITIONING */}
+                {studioSubTab === 'LOGOS' && (
+                  <div className="space-y-4 animate-in fade-in duration-150">
+                    {/* Primary Logo */}
+                    <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                          <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Primary Logo (Institution / Host)</span>
+                        </span>
+                        {customLogoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setCustomLogoUrl('')}
+                            className="text-[10px] text-rose-400 hover:text-rose-300"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="file"
+                          id="primaryLogoFile"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const url = await compressImageToDataUrl(file);
+                              setCustomLogoUrl(url);
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor="primaryLogoFile"
+                          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 text-xs font-semibold cursor-pointer inline-flex items-center gap-1.5"
+                        >
+                          <Upload className="w-3 h-3" />
+                          <span>{customLogoUrl ? 'Change Logo' : 'Upload Logo'}</span>
+                        </label>
+                        {customLogoUrl && (
+                          <span className="text-[11px] text-emerald-400 font-mono font-bold">✓ Loaded</span>
+                        )}
+                      </div>
+
+                      {/* Position Placement */}
+                      <div>
+                        <span className="text-[11px] text-slate-400 block mb-1">Logo Placement Alignment</span>
+                        <div className="grid grid-cols-3 gap-1">
+                          {(['top-left', 'top-center', 'top-right'] as const).map((pos) => (
+                            <button
+                              key={pos}
+                              type="button"
+                              onClick={() => setLogoPosition(pos)}
+                              className={`py-1 rounded text-[10px] font-bold capitalize border ${
+                                logoPosition === pos
+                                  ? 'bg-cyan-600/30 border-cyan-400 text-white'
+                                  : 'bg-slate-900 border-slate-800 text-slate-400'
+                              }`}
+                            >
+                              {pos.replace('-', ' ')}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Position Offsets & Scale */}
+                      <div className="space-y-2 pt-1 text-xs">
+                        <div className="flex items-center justify-between text-slate-400 text-[11px]">
+                          <span>X-Offset ({logoXOffset}px)</span>
+                          <input
+                            type="range"
+                            min="-250"
+                            max="250"
+                            step="10"
+                            value={logoXOffset}
+                            onChange={(e) => setLogoXOffset(Number(e.target.value))}
+                            className="w-32 accent-cyan-400"
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between text-slate-400 text-[11px]">
+                          <span>Y-Offset ({logoYOffset}px)</span>
+                          <input
+                            type="range"
+                            min="-80"
+                            max="80"
+                            step="5"
+                            value={logoYOffset}
+                            onChange={(e) => setLogoYOffset(Number(e.target.value))}
+                            className="w-32 accent-cyan-400"
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between text-slate-400 text-[11px]">
+                          <span>Scale ({logoScale.toFixed(1)}x)</span>
+                          <input
+                            type="range"
+                            min="0.5"
+                            max="1.8"
+                            step="0.1"
+                            value={logoScale}
+                            onChange={(e) => setLogoScale(Number(e.target.value))}
+                            className="w-32 accent-cyan-400"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Secondary Logo (Sponsors / Partners) */}
+                    <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                          <Layers className="w-3.5 h-3.5 text-purple-400" />
+                          <span>Secondary Logo (Sponsor / Partner)</span>
+                        </span>
+                        {secondaryLogoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setSecondaryLogoUrl('')}
+                            className="text-[10px] text-rose-400 hover:text-rose-300"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="file"
+                          id="secondaryLogoFile"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const url = await compressImageToDataUrl(file);
+                              setSecondaryLogoUrl(url);
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor="secondaryLogoFile"
+                          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-purple-300 border border-slate-700 text-xs font-semibold cursor-pointer inline-flex items-center gap-1.5"
+                        >
+                          <Upload className="w-3 h-3" />
+                          <span>{secondaryLogoUrl ? 'Change Sponsor Logo' : 'Upload Sponsor Logo'}</span>
+                        </label>
+                        {secondaryLogoUrl && (
+                          <span className="text-[11px] text-emerald-400 font-mono font-bold">✓ Loaded</span>
+                        )}
+                      </div>
+
+                      {secondaryLogoUrl && (
+                        <div className="space-y-2 pt-1 text-xs">
+                          <div>
+                            <span className="text-[11px] text-slate-400 block mb-1">Placement Alignment</span>
+                            <div className="grid grid-cols-2 gap-1">
+                              {(['top-right', 'top-left'] as const).map((pos) => (
+                                <button
+                                  key={pos}
+                                  type="button"
+                                  onClick={() => setSecondaryLogoPosition(pos)}
+                                  className={`py-1 rounded text-[10px] font-bold capitalize border ${
+                                    secondaryLogoPosition === pos
+                                      ? 'bg-purple-600/30 border-purple-400 text-white'
+                                      : 'bg-slate-900 border-slate-800 text-slate-400'
+                                  }`}
+                                >
+                                  {pos.replace('-', ' ')}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between text-slate-400 text-[11px]">
+                            <span>Sponsor Scale ({secondaryLogoScale.toFixed(1)}x)</span>
+                            <input
+                              type="range"
+                              min="0.5"
+                              max="1.8"
+                              step="0.1"
+                              value={secondaryLogoScale}
+                              onChange={(e) => setSecondaryLogoScale(Number(e.target.value))}
+                              className="w-32 accent-purple-400"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* SUBTAB 3: AUTHORIZED SIGNATURES */}
+                {studioSubTab === 'SIGNATURES' && (
+                  <div className="space-y-3 animate-in fade-in duration-150">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-white">Authorized Signatories</span>
+                      {signatures.length < 3 && (
+                        <button
+                          type="button"
+                          onClick={handleAddSignatory}
+                          className="px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold inline-flex items-center gap-1 shadow"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Add Signatory</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {signatures.length === 0 ? (
+                      <div className="p-4 rounded-xl bg-slate-950/80 border border-dashed border-slate-800 text-center space-y-1.5">
+                        <span className="text-xs font-semibold text-slate-400 block">No signatories added yet</span>
+                        <p className="text-[11px] text-slate-500">
+                          The certificate draft remains empty without pre-printed names. Click &quot;Add Signatory&quot; above to add authorized Directors, Deans, or Conveners.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {signatures.map((sig, idx) => (
+                          <div key={idx} className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2 relative">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-bold font-mono text-purple-300">
+                                Signatory #{idx + 1}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveSignatory(idx)}
+                                className="text-slate-500 hover:text-rose-400 p-1"
+                                title="Remove signatory"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+
+                            <input
+                              type="text"
+                              placeholder="Full Name (e.g., Dr. Rajesh Kumar)"
+                              value={sig.name}
+                              onChange={(e) => handleUpdateSignatory(idx, { name: e.target.value })}
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs outline-none focus:border-purple-400"
+                            />
+
+                            <input
+                              type="text"
+                              placeholder="Designation / Title (e.g., Director & Dean)"
+                              value={sig.title}
+                              onChange={(e) => handleUpdateSignatory(idx, { title: e.target.value })}
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs outline-none focus:border-purple-400"
+                            />
+
+                            <div className="flex items-center justify-between pt-1">
+                              <div className="flex items-center gap-1">
+                                {(['left', 'center', 'right'] as const).map((p) => (
+                                  <button
+                                    key={p}
+                                    type="button"
+                                    onClick={() => handleUpdateSignatory(idx, { position: p })}
+                                    className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize border ${
+                                      (sig.position || (idx === 0 ? 'left' : idx === 1 ? 'right' : 'center')) === p
+                                        ? 'bg-purple-600/30 border-purple-400 text-white'
+                                        : 'bg-slate-900 border-slate-800 text-slate-500'
+                                    }`}
+                                  >
+                                    {p}
+                                  </button>
+                                ))}
+                              </div>
+
+                              <div>
+                                <input
+                                  type="file"
+                                  id={`sigFile_${idx}`}
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const url = await compressImageToDataUrl(file, 500);
+                                      handleUpdateSignatory(idx, { imageUrl: url });
+                                    }
+                                  }}
+                                />
+                                <label
+                                  htmlFor={`sigFile_${idx}`}
+                                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 text-[10px] font-bold cursor-pointer inline-flex items-center gap-1"
+                                >
+                                  <Upload className="w-2.5 h-2.5" />
+                                  <span>{sig.imageUrl ? 'Change Sign' : 'Upload Sign'}</span>
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* SUBTAB 4: FREE TEXTS & VERTICAL SPACING */}
+                {studioSubTab === 'TEXTS' && (
+                  <div className="space-y-3 animate-in fade-in duration-150">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                        Certificate Main Title
+                      </label>
+                      <input
+                        type="text"
+                        value={customTitle}
+                        onChange={(e) => setCustomTitle(e.target.value)}
+                        placeholder="CERTIFICATE OF ACHIEVEMENT"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-purple-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                        Ribbon / Subtitle
+                      </label>
+                      <input
+                        type="text"
+                        value={customRibbonText}
+                        onChange={(e) => setCustomRibbonText(e.target.value)}
+                        placeholder="e.g. NATIONAL INNOVATION HACKATHON 2026"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-purple-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                        Custom Body Paragraph
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={customBodyText}
+                        onChange={(e) => setCustomBodyText(e.target.value)}
+                        placeholder="Leave blank for automatic achievement description or enter custom paragraph text."
+                        className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-purple-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">
+                        Accreditation / Affiliation Note
+                      </label>
+                      <input
+                        type="text"
+                        value={customFooterText}
+                        onChange={(e) => setCustomFooterText(e.target.value)}
+                        placeholder="e.g. Approved by AICTE &bull; Affiliated to University"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-purple-400"
+                      />
+                    </div>
+
+                    {/* Vertical Content Spacing Offset */}
+                    <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                      <div className="flex items-center justify-between text-xs text-slate-300">
+                        <span className="font-semibold flex items-center gap-1.5">
+                          <Move className="w-3 h-3 text-cyan-400" />
+                          <span>Vertical Content Offset</span>
+                        </span>
+                        <span className="font-mono text-cyan-300 text-[11px]">{textOffsetY}px</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="-60"
+                        max="60"
+                        step="5"
+                        value={textOffsetY}
+                        onChange={(e) => setTextOffsetY(Number(e.target.value))}
+                        className="w-full accent-cyan-400"
+                      />
+                      <span className="text-[10px] text-slate-500 block">
+                        Move the text block up/down to balance spacing with your uploaded logos.
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Save Button */}
+                <div className="pt-2 border-t border-slate-800">
+                  <button
+                    onClick={handleSaveTemplate}
+                    disabled={savingTemplate}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:brightness-110 text-white text-xs font-bold shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{savingTemplate ? 'Saving Template...' : 'Save Certificate Template'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Live Preview Canvas (7 cols) */}
+              <div className="lg:col-span-7 p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                  <div>
+                    <span className="text-xs font-mono text-purple-300 uppercase font-bold flex items-center gap-1.5">
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Live Canvas Preview ({orientation})</span>
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      Discreet platform accreditation &quot;Powered by AVEERANEX&quot; at bottom
+                    </span>
+                  </div>
+
+                  {/* Award Level Switcher */}
+                  <div className="flex items-center gap-1">
+                    {(['WINNER_1ST', 'WINNER_2ND', 'WINNER_3RD', 'RUNNER_4TH', 'PARTICIPATION'] as const).map((lvl) => (
+                      <button
+                        key={lvl}
+                        type="button"
+                        onClick={() => setPreviewAward(lvl)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                          previewAward === lvl
+                            ? 'bg-purple-600 border-purple-400 text-white'
+                            : 'bg-slate-950 border-slate-800 text-slate-400'
+                        }`}
+                      >
+                        {lvl === 'WINNER_1ST' ? '1st' : lvl === 'WINNER_2ND' ? '2nd' : lvl === 'WINNER_3RD' ? '3rd' : lvl === 'RUNNER_4TH' ? 'Runner' : 'Part.'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="w-full flex justify-center overflow-x-auto py-2">
+                  <CertificateCanvas
+                    participantName="Pooja Sharma"
+                    teamName="Cyber Shields"
+                    certificateId="AVX-PREVIEW-2026"
+                    topicTitle="Quantum Cryptography in Edge Networks"
+                    college={hostUser.college || 'Technology Institute'}
+                    category="PARTICIPANT"
+                    awardLevel={previewAward}
+                    awardOrientation={orientation}
+                    runnerTheme="white"
+                    presentedOn={eventTitle}
+                    template={templateConfig}
+                  />
+                </div>
               </div>
             </div>
-
-            {/* Custom Title */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Certificate Title
-              </label>
-              <input
-                type="text"
-                value={customTitle}
-                onChange={(e) => setCustomTitle(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-purple-400"
-              />
-            </div>
-
-            {/* Host Signatory */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Authorized Signatory Name
-              </label>
-              <input
-                type="text"
-                value={hostSignatory}
-                onChange={(e) => setHostSignatory(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-purple-400"
-              />
-            </div>
-
-            {/* Save Button */}
-            <button
-              onClick={handleSaveTemplate}
-              disabled={savingTemplate}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:brightness-110 text-white text-xs font-bold shadow-lg disabled:opacity-50"
-            >
-              {savingTemplate ? 'Saving Template...' : 'Save Certificate Template'}
-            </button>
           </div>
+        )}
 
-          {/* Live Preview Canvas */}
-          <div className="lg:col-span-8 p-6 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-col items-center justify-center">
-            <span className="text-xs font-mono text-slate-400 mb-3 uppercase font-bold">
-              Interactive Certificate Canvas Preview
-            </span>
-            <div className="w-full flex justify-center overflow-x-auto">
-              <CertificateCanvas
-                participantName="Pooja Sharma"
-                teamName="Cyber Shields"
-                certificateId="AVX-PREVIEW-2026"
-                topicTitle="Quantum Cryptography in Edge Networks"
-                college={hostUser.college || 'Technology Institute'}
-                category="PARTICIPANT"
-                awardLevel="WINNER_1ST"
-                awardOrientation={orientation}
-                runnerTheme="white"
-                presentedOn={eventTitle}
-                template={templateConfig}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ======================================================== */}
-      {/* TAB 5: EVENT SPACE SETUP                                 */}
+        {/* ======================================================== */}
+        {/* TAB 5: EVENT SPACE SETUP                                 */}
       {/* ======================================================== */}
       {activeTab === 'EVENT_INFO' && (
         <form onSubmit={handleSaveEventInfo} className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4">

@@ -7,6 +7,7 @@ import { Download, ShieldCheck, Printer } from 'lucide-react';
 import { UserCategory, AwardLevel } from '@/lib/types';
 
 export interface CertificateSignatureItem {
+  id?: string;
   name: string;
   title: string;
   imageUrl?: string;
@@ -15,16 +16,28 @@ export interface CertificateSignatureItem {
 
 export interface CertificateTemplateConfig {
   orientation?: 'landscape' | 'portrait';
-  bgStyle?: 'classic' | 'gold' | 'silver' | 'bronze' | 'dark' | 'white';
+  bgStyle?: 'classic' | 'gold' | 'silver' | 'bronze' | 'dark' | 'white' | 'custom';
+  customBgColor?: string;
   fontStyle?: 'royal' | 'modern' | 'classic';
   accentColor?: string;
+  titleColor?: string;
+  bodyTextColor?: string;
   customTitle?: string;
   hostSignatory?: string;
   customLogoUrl?: string;
-  logoPosition?: 'left' | 'center' | 'right';
+  logoPosition?: 'left' | 'center' | 'right' | 'top-left' | 'top-center' | 'top-right';
+  logoXOffset?: number;
+  logoYOffset?: number;
+  logoScale?: number;
+  secondaryLogoUrl?: string;
+  secondaryLogoPosition?: 'left' | 'center' | 'right' | 'top-left' | 'top-center' | 'top-right';
+  secondaryLogoScale?: number;
   customRibbonText?: string;
   customBodyText?: string;
+  customFooterText?: string;
+  textOffsetY?: number;
   signatures?: CertificateSignatureItem[];
+  isCleanDraft?: boolean;
 }
 
 interface CertificateCanvasProps {
@@ -49,6 +62,21 @@ interface CertificateCanvasProps {
 /**
  * Auto-fits font size so long names/titles never overflow horizontally.
  */
+/**
+ * Checks whether a given HEX color is dark or light.
+ */
+function isColorDark(hex?: string): boolean {
+  if (!hex || !hex.startsWith('#')) return false;
+  const c = hex.substring(1);
+  const rgb = parseInt(c.length === 3 ? c.split('').map((x) => x + x).join('') : c, 16);
+  if (isNaN(rgb)) return false;
+  const r = (rgb >> 16) & 0xff;
+  const g = (rgb >> 8) & 0xff;
+  const b = (rgb >> 0) & 0xff;
+  const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luma < 128;
+}
+
 function fitFontSize(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -238,7 +266,7 @@ export default function CertificateCanvas({
     template?.orientation || (isMentorJury ? 'portrait' : awardOrientation || 'landscape');
   const isPortrait = orientation === 'portrait';
 
-  const resolveBgStyle = (): 'classic' | 'gold' | 'silver' | 'bronze' | 'dark' | 'white' => {
+  const resolveBgStyle = (): 'classic' | 'gold' | 'silver' | 'bronze' | 'dark' | 'white' | 'custom' => {
     if (template?.bgStyle) return template.bgStyle;
     if (isMentorJury || awardLevel === 'WINNER_1ST') return 'gold';
     if (awardLevel === 'WINNER_2ND') return 'silver';
@@ -319,28 +347,49 @@ export default function CertificateCanvas({
     const renderCertificate = async () => {
       setIsReady(false);
 
-      const sigList: CertificateSignatureItem[] =
-        template?.signatures && template.signatures.length > 0
-          ? template.signatures
-          : [
-              {
-                name: template?.hostSignatory || 'Dr. Rajesh Kumar',
-                title: 'Director, AVEERANEX (OPC) PVT. LTD.',
-                imageUrl: '/assets/signature.png',
-                position: 'left',
-              },
-            ];
+      const isHostConsole = Boolean(template);
+      const isDarkBg =
+        bgStyle === 'dark' || (Boolean(template?.customBgColor) && isColorDark(template?.customBgColor));
 
-      const isDarkBg = bgStyle === 'dark';
-      const logoSrc =
-        template?.customLogoUrl ||
-        (isDarkBg ? '/assets/logo.png' : '/assets/logo-dark-text.png');
+      // Clean Draft Mode: For event hosts & admin consoles, do NOT pre-load default director name or logo!
+      const sigList: CertificateSignatureItem[] = isHostConsole
+        ? template?.signatures || []
+        : [
+            {
+              name: 'Dr. Rajesh Kumar',
+              title: 'Director, AVEERANEX (OPC) PVT. LTD.',
+              imageUrl: '/assets/signature.png',
+              position: 'left',
+            },
+          ];
 
-      const [baseTemplateImg, logoImg, sealImg, qrImg, ...loadedSigImgs] = await Promise.all([
-        bgStyle === 'classic' && !isPortrait ? loadImage('/assets/certificate-template.png') : Promise.resolve(null),
-        loadImage(logoSrc),
-        loadImage('/assets/seal.png'),
+      // Top logo: in clean draft mode, only display if host explicitly uploaded customLogoUrl!
+      const logoSrc = isHostConsole
+        ? template?.customLogoUrl || null
+        : (isDarkBg ? '/assets/logo.png' : '/assets/logo-dark-text.png');
+
+      const secondaryLogoSrc = template?.secondaryLogoUrl || null;
+      const aveeranexBottomLogoSrc = isDarkBg ? '/assets/logo.png' : '/assets/logo-dark-text.png';
+
+      const [
+        baseTemplateImg,
+        logoImg,
+        secondaryLogoImg,
+        sealImg,
+        qrImg,
+        aveeranexBottomImg,
+        ...loadedSigImgs
+      ] = await Promise.all([
+        bgStyle === 'classic' && !isPortrait && !isHostConsole
+          ? loadImage('/assets/certificate-template.png')
+          : Promise.resolve(null),
+        logoSrc ? loadImage(logoSrc) : Promise.resolve(null),
+        secondaryLogoSrc ? loadImage(secondaryLogoSrc) : Promise.resolve(null),
+        !isHostConsole || (template?.signatures && template.signatures.length > 0)
+          ? loadImage('/assets/seal.png')
+          : Promise.resolve(null),
         qrDataUrl ? loadImage(qrDataUrl) : Promise.resolve(null),
+        loadImage(aveeranexBottomLogoSrc),
         ...sigList.map((s) => loadImage(s.imageUrl || '/assets/signature.png')),
       ]);
 
@@ -348,7 +397,18 @@ export default function CertificateCanvas({
       const isMetallicBg = bgStyle === 'gold' || bgStyle === 'silver' || bgStyle === 'bronze';
 
       // 1. DRAW BACKGROUND
-      if (isMetallicBg) {
+      if (template?.customBgColor) {
+        ctx.fillStyle = template.customBgColor;
+        ctx.fillRect(0, 0, certWidth, certHeight);
+
+        const borderColor = template.titleColor || themeColor;
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 14;
+        ctx.strokeRect(80, 80, certWidth - 160, certHeight - 160);
+        ctx.strokeStyle = template.accentColor || '#94A3B8';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(116, 116, certWidth - 232, certHeight - 232);
+      } else if (isMetallicBg) {
         const grad = ctx.createLinearGradient(0, 0, certWidth, certHeight);
         if (bgStyle === 'gold') {
           grad.addColorStop(0, '#F7DF8A');
@@ -426,10 +486,10 @@ export default function CertificateCanvas({
         ctx.fillRect(0, 0, certWidth, certHeight);
       }
 
-      const primaryText = isDarkBg ? '#FFFFFF' : '#09090B';
-      const secondaryText = isDarkBg ? '#F1F5F9' : isMetallicBg ? '#09090B' : '#0F172A';
-      const mutedText = isDarkBg ? '#E2E8F0' : isMetallicBg ? '#18181B' : '#1E293B';
-      const accentText = isMetallicBg ? '#000000' : isDarkBg ? (template?.accentColor || '#FFFFFF') : themeColor;
+      const primaryText = template?.titleColor || (isDarkBg ? '#FFFFFF' : '#09090B');
+      const secondaryText = template?.bodyTextColor || (isDarkBg ? '#F1F5F9' : isMetallicBg ? '#09090B' : '#0F172A');
+      const mutedText = isDarkBg ? '#E2E8F0' : isMetallicBg ? '#18181B' : '#334155';
+      const accentText = template?.accentColor || (isMetallicBg ? '#000000' : isDarkBg ? '#FFFFFF' : themeColor);
 
       const displayFont = getFontFamily('display');
       const bodyFont = getFontFamily('body');
@@ -443,6 +503,16 @@ export default function CertificateCanvas({
 
       // Helper to draw all background-removed signatures + round stamp beside primary signature & designation
       const drawSignatures = (sigBaseY: number) => {
+        if (sigList.length === 0) {
+          if (isHostConsole) {
+            ctx.textAlign = 'center';
+            ctx.fillStyle = isDarkBg ? 'rgba(255, 255, 255, 0.45)' : 'rgba(15, 23, 42, 0.45)';
+            ctx.font = `600 24px ${bodyFont}`;
+            ctx.fillText('[ + Add Authorized Director & Faculty Signatures in Studio Panel ]', centerX, sigBaseY + 185);
+          }
+          return;
+        }
+
         sigList.forEach((sig, idx) => {
           const pos = sig.position || (idx === 0 ? 'left' : idx === 1 ? 'right' : 'center');
           const sx = getSlotX(pos);
@@ -486,21 +556,41 @@ export default function CertificateCanvas({
       // 2. DRAW CONTENT BASED ON ORIENTATION
       if (isPortrait) {
         // ==================== VERTICAL PORTRAIT LAYOUT (2400 x 3000) ====================
+        const textOffsetY = template?.textOffsetY || 0;
+
         if (logoImg) {
           const trimmed = createTrimmedLogo(logoImg);
-          const maxLogoW = 980;
-          const maxLogoH = 215;
+          const scaleFactor = template?.logoScale || 1.0;
+          const maxLogoW = 980 * scaleFactor;
+          const maxLogoH = 215 * scaleFactor;
           const scale = Math.min(maxLogoW / trimmed.width, maxLogoH / trimmed.height);
           const logoW = trimmed.width * scale;
           const logoH = trimmed.height * scale;
-          const logoX =
-            template?.logoPosition === 'left'
-              ? 200
-              : template?.logoPosition === 'right'
-              ? certWidth - 200 - logoW
-              : centerX - logoW / 2;
-          const logoY = 160 + (maxLogoH - logoH) / 2;
+          let logoX = centerX - logoW / 2;
+          if (template?.logoPosition === 'left' || template?.logoPosition === 'top-left') {
+            logoX = 200;
+          } else if (template?.logoPosition === 'right' || template?.logoPosition === 'top-right') {
+            logoX = certWidth - 200 - logoW;
+          }
+          logoX += template?.logoXOffset || 0;
+          const logoY = 160 + (template?.logoYOffset || 0) + (maxLogoH - logoH) / 2;
           ctx.drawImage(trimmed, logoX, logoY, logoW, logoH);
+        }
+
+        if (secondaryLogoImg) {
+          const trimmedSec = createTrimmedLogo(secondaryLogoImg);
+          const secScale = template?.secondaryLogoScale || template?.logoScale || 1.0;
+          const maxSecW = 750 * secScale;
+          const maxSecH = 200 * secScale;
+          const sScale = Math.min(maxSecW / trimmedSec.width, maxSecH / trimmedSec.height);
+          const secW = trimmedSec.width * sScale;
+          const secH = trimmedSec.height * sScale;
+          let secX = certWidth - 200 - secW;
+          if (template?.secondaryLogoPosition === 'left' || template?.logoPosition === 'right') {
+            secX = 200;
+          }
+          const secY = 160 + (template?.logoYOffset || 0) + (maxSecH - secH) / 2;
+          ctx.drawImage(trimmedSec, secX, secY, secW, secH);
         }
 
         ctx.textAlign = 'center';
@@ -530,7 +620,7 @@ export default function CertificateCanvas({
           ctx,
           headerTitle,
           centerX,
-          445,
+          445 + textOffsetY,
           1960,
           headerFontSize + 14,
           `700 ${headerFontSize}px ${displayFont}`,
@@ -563,7 +653,7 @@ export default function CertificateCanvas({
           ctx,
           ribbonText,
           centerX,
-          divY + 84,
+          divY + 84 + textOffsetY,
           1960,
           58,
           `700 50px ${displayFont}`,
@@ -572,7 +662,7 @@ export default function CertificateCanvas({
 
         ctx.fillStyle = secondaryText;
         ctx.font = `600 44px ${bodyFont}`;
-        ctx.fillText('THIS CERTIFICATE IS PROUDLY PRESENTED TO', centerX, 945);
+        ctx.fillText('THIS CERTIFICATE IS PROUDLY PRESENTED TO', centerX, 945 + textOffsetY);
 
         const nameDisplay = participantName || 'Recipient Name';
         const nameSize = fitFontSize(
@@ -585,17 +675,17 @@ export default function CertificateCanvas({
         );
         ctx.fillStyle = accentText;
         ctx.font = `800 ${nameSize}px ${displayFont}`;
-        ctx.fillText(nameDisplay, centerX, 1125);
+        ctx.fillText(nameDisplay, centerX, 1125 + textOffsetY);
 
         ctx.strokeStyle = primaryText;
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(centerX - 680, 1235);
-        ctx.lineTo(centerX + 680, 1235);
+        ctx.moveTo(centerX - 680, 1235 + textOffsetY);
+        ctx.lineTo(centerX + 680, 1235 + textOffsetY);
         ctx.stroke();
 
         // Flowing dynamic body section (larger legible typography, balanced gaps)
-        let flowY = 1385;
+        let flowY = 1385 + textOffsetY;
         if (isMentorJury && !template?.customBodyText) {
           flowY = drawWrappedText(
             ctx,
@@ -748,28 +838,82 @@ export default function CertificateCanvas({
         ctx.font = `600 26px monospace`;
         ctx.fillText(`Certificate ID: ${certificateId}`, 185, 2650);
         ctx.fillText(`Verify: aveeranex-hackathon.vercel.app/verify/${certificateId}`, 185, 2700);
+
+        if (template?.customFooterText) {
+          flowY += 15;
+          drawWrappedText(
+            ctx,
+            template.customFooterText,
+            centerX,
+            flowY,
+            1900,
+            46,
+            `600 32px ${bodyFont}`,
+            mutedText
+          );
+        }
+
+        // Bottom Brand Attribution for Event & Admin Host Certificates
+        if (template) {
+          const badgeLogo = aveeranexBottomImg;
+          const badgeH = 40;
+          const badgeW = badgeLogo ? Math.min(130, (badgeLogo.width / badgeLogo.height) * badgeH) : 40;
+          const brandTotalW = badgeW + 430;
+          const brandX = centerX - brandTotalW / 2;
+          const badgeY = 2860;
+
+          if (badgeLogo) {
+            const trimmed = createTrimmedLogo(badgeLogo);
+            ctx.drawImage(trimmed, brandX, badgeY - badgeH / 2, badgeW, badgeH);
+          }
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = mutedText;
+          ctx.font = `700 22px ${bodyFont}`;
+          ctx.fillText('Powered by AVEERANEX (OPC) PRIVATE LIMITED', brandX + badgeW + 14, badgeY);
+        }
       } else {
         // ==================== HORIZONTAL LANDSCAPE LAYOUT (3508 x 2479) ====================
         if (bgStyle !== 'classic' || template?.customLogoUrl) {
+          const textOffsetY = template?.textOffsetY || 0;
+
           if (logoImg) {
             const trimmed = createTrimmedLogo(logoImg);
-            const maxLogoW = 1060;
-            const maxLogoH = 215;
+            const scaleFactor = template?.logoScale || 1.0;
+            const maxLogoW = 1060 * scaleFactor;
+            const maxLogoH = 215 * scaleFactor;
             const scale = Math.min(maxLogoW / trimmed.width, maxLogoH / trimmed.height);
             const logoW = trimmed.width * scale;
             const logoH = trimmed.height * scale;
-            const logoX =
-              template?.logoPosition === 'left'
-                ? 240
-                : template?.logoPosition === 'right'
-                ? certWidth - 240 - logoW
-                : centerX - logoW / 2;
-            const logoY = 135 + (maxLogoH - logoH) / 2;
+            let logoX = centerX - logoW / 2;
+            if (template?.logoPosition === 'left' || template?.logoPosition === 'top-left') {
+              logoX = 240;
+            } else if (template?.logoPosition === 'right' || template?.logoPosition === 'top-right') {
+              logoX = certWidth - 240 - logoW;
+            }
+            logoX += template?.logoXOffset || 0;
+            const logoY = 135 + (template?.logoYOffset || 0) + (maxLogoH - logoH) / 2;
             if (bgStyle === 'classic' && template?.customLogoUrl) {
               ctx.fillStyle = '#FFFFFF';
               ctx.fillRect(centerX - 550, 120, 1100, 230);
             }
             ctx.drawImage(trimmed, logoX, logoY, logoW, logoH);
+          }
+
+          if (secondaryLogoImg) {
+            const trimmedSec = createTrimmedLogo(secondaryLogoImg);
+            const secScale = template?.secondaryLogoScale || template?.logoScale || 1.0;
+            const maxSecW = 800 * secScale;
+            const maxSecH = 200 * secScale;
+            const sScale = Math.min(maxSecW / trimmedSec.width, maxSecH / trimmedSec.height);
+            const secW = trimmedSec.width * sScale;
+            const secH = trimmedSec.height * sScale;
+            let secX = certWidth - 240 - secW;
+            if (template?.secondaryLogoPosition === 'left' || template?.logoPosition === 'right') {
+              secX = 240;
+            }
+            const secY = 135 + (template?.logoYOffset || 0) + (maxSecH - secH) / 2;
+            ctx.drawImage(trimmedSec, secX, secY, secW, secH);
           }
 
           if (bgStyle !== 'classic') {
@@ -1103,6 +1247,26 @@ export default function CertificateCanvas({
           ctx.fillText(`Certificate ID: ${certificateId}`, 220, 1915);
           ctx.fillText(`Verification: aveeranex-hackathon.vercel.app/verify/${certificateId}`, 220, 1955);
 
+          // Bottom Brand Attribution for Event & Admin Host Certificates
+          if (template) {
+            const badgeLogo = aveeranexBottomImg;
+            const badgeH = 36;
+            const badgeW = badgeLogo ? Math.min(120, (badgeLogo.width / badgeLogo.height) * badgeH) : 36;
+            const brandTotalW = badgeW + 410;
+            const brandX = centerX - brandTotalW / 2;
+            const badgeY = 2040;
+
+            if (badgeLogo) {
+              const trimmed = createTrimmedLogo(badgeLogo);
+              ctx.drawImage(trimmed, brandX, badgeY - badgeH / 2, badgeW, badgeH);
+            }
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = mutedText;
+            ctx.font = `700 22px ${bodyFont}`;
+            ctx.fillText('Powered by AVEERANEX (OPC) PRIVATE LIMITED', brandX + badgeW + 12, badgeY);
+          }
+
           if (qrImg) {
             const qrX = certWidth - 375;
             const qrY = 1715;
@@ -1126,6 +1290,25 @@ export default function CertificateCanvas({
           ctx.font = `600 24px monospace`;
           ctx.fillText(`Certificate ID: ${certificateId}`, 360, 2195);
           ctx.fillText(`Verification: aveeranex-hackathon.vercel.app/verify/${certificateId}`, 360, 2235);
+
+          if (template) {
+            const badgeLogo = aveeranexBottomImg;
+            const badgeH = 36;
+            const badgeW = badgeLogo ? Math.min(120, (badgeLogo.width / badgeLogo.height) * badgeH) : 36;
+            const brandTotalW = badgeW + 410;
+            const brandX = centerX - brandTotalW / 2;
+            const badgeY = 2340;
+
+            if (badgeLogo) {
+              const trimmed = createTrimmedLogo(badgeLogo);
+              ctx.drawImage(trimmed, brandX, badgeY - badgeH / 2, badgeW, badgeH);
+            }
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = mutedText;
+            ctx.font = `700 22px ${bodyFont}`;
+            ctx.fillText('Powered by AVEERANEX (OPC) PRIVATE LIMITED', brandX + badgeW + 12, badgeY);
+          }
 
           if (qrImg) {
             ctx.fillStyle = '#FFFFFF';
@@ -1169,6 +1352,18 @@ export default function CertificateCanvas({
     template?.customRibbonText,
     template?.customBodyText,
     template?.signatures,
+    template?.titleColor,
+    template?.bodyTextColor,
+    template?.customBgColor,
+    template?.logoXOffset,
+    template?.logoYOffset,
+    template?.logoScale,
+    template?.secondaryLogoUrl,
+    template?.secondaryLogoPosition,
+    template?.secondaryLogoScale,
+    template?.customFooterText,
+    template?.textOffsetY,
+    template?.isCleanDraft,
     certWidth,
     certHeight,
     isPortrait,
