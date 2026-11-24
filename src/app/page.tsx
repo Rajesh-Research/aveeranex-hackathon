@@ -26,29 +26,67 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-black text-white selection:bg-cyan-500 selection:text-black flex flex-col justify-between">
       {/* Subtle top ambient glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[420px] bg-gradient-to-b from-cyan-500/10 via-teal-500/5 to-transparent blur-3xl pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[950px] h-[480px] bg-gradient-to-b from-orange-500/10 via-cyan-500/10 to-transparent blur-3xl pointer-events-none" />
 
       {/* HERO SECTION */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 md:pt-28 md:pb-20 text-center relative z-10">
-        {/* Stylish Display Headline - Logo Model Font Style */}
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-light tracking-[0.22em] text-white leading-[1.25] uppercase">
-          AVEERANEX{' '}
-          <span className="font-normal text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-cyan-300 to-emerald-400">
-            HACKATHON
-          </span>
-          <br />
-          <span className="font-extralight tracking-[0.3em] text-zinc-400 text-2xl sm:text-4xl lg:text-4xl">
-            PLATFORM
-          </span>
-        </h1>
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-14 md:pt-24 md:pb-18 text-center relative z-10">
+        {/* Brand Eyebrow Tag in Aveeranex Logo Typography */}
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-950/90 border border-zinc-800 text-[11px] font-mono tracking-[0.28em] text-zinc-300 uppercase mb-8 shadow-inner">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>AVEERANEX ECOSYSTEM</span>
+        </div>
 
-        {/* Clean Concise Subtitle */}
-        <p className="mt-6 text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto font-normal leading-relaxed">
-          Welcome to the official portal for{' '}
-          <span className="text-white font-semibold">
-            participants / corporates / colleges / universities
-          </span>{' '}
-          to host their hackathons and competitions.
+        {/* RISEUP Display Emblem (Matching Image with Aveeranex Font Style) */}
+        <div className="flex flex-col items-center justify-center">
+          <div className="relative inline-block">
+            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-extrabold tracking-[0.16em] uppercase font-display select-none flex items-center justify-center">
+              <span className="text-white drop-shadow-[0_2px_12px_rgba(255,255,255,0.15)]">
+                RISE
+              </span>
+              <span className="text-[#FF5722] bg-gradient-to-r from-[#FF5722] via-[#FF6D00] to-[#FFA000] bg-clip-text text-transparent drop-shadow-[0_2px_16px_rgba(255,87,34,0.4)]">
+                UP
+              </span>
+            </h1>
+
+            {/* Upward Rising Arrow (Matching Image 2 Angle & Color) */}
+            <div className="flex justify-center -mt-1 sm:-mt-2 mb-2">
+              <svg
+                className="w-8 h-8 sm:w-11 sm:h-11 text-[#FF5722] stroke-[#FF5722] drop-shadow-[0_0_12px_rgba(255,87,34,0.6)] transform hover:translate-x-1 hover:-translate-y-1 transition-transform"
+                viewBox="0 0 24 24"
+                fill="none"
+                strokeWidth="3.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="7" y1="17" x2="17" y2="7"></line>
+                <polyline points="7 7 17 7 17 17"></polyline>
+              </svg>
+            </div>
+          </div>
+
+          {/* Caption 1: Compete. Achieve. Rise. (In Aveeranex Logo Font Style) */}
+          <div className="mt-1 text-lg sm:text-2xl lg:text-3xl font-semibold tracking-[0.18em] text-white font-display">
+            <span>Compete</span>
+            <span className="text-cyan-400 mx-1">.</span>
+            <span>Achieve</span>
+            <span className="text-emerald-400 mx-1">.</span>
+            <span>Rise</span>
+            <span className="text-[#FF5722] mx-1">.</span>
+          </div>
+
+          {/* Caption 2: Powered by AVEERANEX (Aveeranex Logo Font Tracking) */}
+          <p className="mt-2.5 text-xs sm:text-sm font-light tracking-[0.32em] text-zinc-400 uppercase font-sans">
+            Powered by{' '}
+            <span className="font-bold text-white tracking-[0.25em]">
+              AVEERANEX
+            </span>
+          </p>
+        </div>
+
+        {/* Clean, Grammar-Checked Subtitle */}
+        <p className="mt-8 text-base sm:text-lg text-zinc-300 max-w-2xl mx-auto font-normal leading-relaxed">
+          Welcome to <span className="text-white font-semibold">AVEERANEX RISEUP</span> — the premier platform for hosting events, competitions, and hackathons for corporates, colleges, and universities.
         </p>
 
         {/* Primary Action Row */}

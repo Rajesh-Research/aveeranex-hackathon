@@ -27,7 +27,7 @@ export default function Footer() {
               />
             </div>
             <p className="text-zinc-500 max-w-md text-sm leading-relaxed">
-              AVEERANEX (OPC) PRIVATE LIMITED — Official portal for participants, corporates, colleges, and universities to host hackathons and competitions.
+              AVEERANEX RISEUP — Official portal for participants, corporates, colleges, and universities to host events, competitions, and hackathons.
             </p>
             <div className="flex items-center gap-3 pt-2">
               <a
@@ -63,7 +63,7 @@ export default function Footer() {
           {/* Quick Navigation */}
           <div className="space-y-3">
             <h4 className="text-white font-semibold text-xs uppercase tracking-wider font-mono">
-              Hackathon Platform
+              RISEUP Platform
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
